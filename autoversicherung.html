@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autoversicherung – Prämie berechnen | die Mobiliar</title>
+  <meta name="description" content="Berechnen Sie jetzt Ihre Autoversicherung – Haftpflicht, Teilkasko und Vollkasko bei der Mobiliar.">
+  <link rel="icon" href="img/favicon.ico">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- DEMO Banner -->
+  <div class="demo-banner">Demo Zwecke – Keine offizielle Seite der Mobiliar</div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header__inner">
+      <a href="index.html" class="header__logo">
+        <img src="img/mobi-logo.svg" alt="die Mobiliar">
+      </a>
+      <nav class="header__nav">
+        <a href="index.html">Startseite</a>
+        <a href="praemienrechner.html">Versicherungen</a>
+        <a href="autoversicherung.html" class="active">Autoversicherung</a>
+        <a href="event.html">Events</a>
+        <a href="#kontakt" class="btn btn--primary btn--sm">Kontakt</a>
+      </nav>
+      <div class="header__burger" aria-label="Navigation öffnen">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <img class="hero__img" src="img/hero-auto.jpg" alt="Frau im Auto">
+    <div class="hero__overlay"></div>
+    <div class="hero__content">
+      <h1>Autoversicherung</h1>
+      <p>Haftpflicht, Teilkasko und Vollkasko – massgeschneidert für Ihr Fahrzeug. Berechnen Sie jetzt Ihre persönliche Prämie.</p>
+    </div>
+  </section>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <div class="breadcrumb__inner">
+      <a href="index.html">Startseite</a>
+      <span>›</span>
+      <a href="praemienrechner.html">Versicherungen</a>
+      <span>›</span>
+      <span>Autoversicherung</span>
+    </div>
+  </div>
+
+  <!-- Product Info + Calculator -->
+  <section class="section">
+    <div class="section__inner">
+      <div class="two-col">
+        <!-- Left: Info -->
+        <div>
+          <h2>Ihre Autoversicherung – so individuell wie Sie</h2>
+          <p style="color: var(--mobi-gray-600); margin: 16px 0 24px;">
+            Mit der Autoversicherung der Mobiliar sind Sie rundum geschützt. Ob Haftpflicht, Teilkasko oder Vollkasko – stellen Sie Ihre Versicherung ganz nach Ihren Bedürfnissen zusammen.
+          </p>
+          <ul class="features-list">
+            <li>Obligatorische Haftpflichtversicherung inklusive</li>
+            <li>Teilkasko bei Diebstahl, Glasbruch, Naturereignissen</li>
+            <li>Vollkasko für Kollisionsschäden am eigenen Fahrzeug</li>
+            <li>Insassenversicherung für Mitfahrende</li>
+            <li>Pannenhilfe rund um die Uhr – 24/7 Assistance</li>
+            <li>Bonusschutz: Ihre Prämie bleibt auch nach einem Schaden tief</li>
+          </ul>
+        </div>
+
+        <!-- Right: Calculator Form -->
+        <div>
+          <form class="calc-form" id="autoCalcForm">
+            <h3>🚗 Prämie berechnen</h3>
+            <p style="font-size: 14px; color: var(--mobi-gray-600); margin-bottom: 24px;">
+              Füllen Sie das Formular aus und erhalten Sie ein unverbindliches Angebot.
+            </p>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="vorname">Vorname</label>
+                <input type="text" id="vorname" name="vorname" placeholder="z.B. Marc" required>
+              </div>
+              <div class="form-group">
+                <label for="nachname">Nachname</label>
+                <input type="text" id="nachname" name="nachname" placeholder="z.B. Baumgartner" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="email">E-Mail-Adresse</label>
+              <input type="email" id="email" name="email" placeholder="marc.baumgartner@email.ch" required>
+            </div>
+
+            <div class="form-group">
+              <label for="plz">Postleitzahl</label>
+              <input type="text" id="plz" name="plz" placeholder="z.B. 3011" maxlength="4" pattern="[0-9]{4}" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="marke">Fahrzeugmarke</label>
+                <select id="marke" name="marke" required>
+                  <option value="">Bitte wählen</option>
+                  <option value="audi">Audi</option>
+                  <option value="bmw">BMW</option>
+                  <option value="mercedes">Mercedes-Benz</option>
+                  <option value="vw">Volkswagen</option>
+                  <option value="skoda">Škoda</option>
+                  <option value="toyota">Toyota</option>
+                  <option value="tesla">Tesla</option>
+                  <option value="andere">Andere</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="baujahr">Baujahr</label>
+                <select id="baujahr" name="baujahr" required>
+                  <option value="">Bitte wählen</option>
+                  <option value="2026">2026</option>
+                  <option value="2025">2025</option>
+                  <option value="2024">2024</option>
+                  <option value="2023">2023</option>
+                  <option value="2022">2022</option>
+                  <option value="2021">2021</option>
+                  <option value="2020">2020</option>
+                  <option value="aelter">Älter</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="deckung">Gewünschte Deckung</label>
+              <select id="deckung" name="deckung" required>
+                <option value="">Bitte wählen</option>
+                <option value="haftpflicht">Haftpflicht</option>
+                <option value="teilkasko">Haftpflicht + Teilkasko</option>
+                <option value="vollkasko">Haftpflicht + Vollkasko</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="km">Jährliche Kilometerleistung</label>
+              <select id="km" name="km">
+                <option value="10000">Bis 10'000 km</option>
+                <option value="15000" selected>10'000 – 15'000 km</option>
+                <option value="20000">15'000 – 20'000 km</option>
+                <option value="30000">Über 20'000 km</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn btn--primary btn--lg" style="width: 100%; justify-content: center;">
+              Prämie berechnen
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Leistungen / Info Boxes -->
+  <section class="section section--gray">
+    <div class="section__inner">
+      <h2 class="section__title">Unsere Leistungen im Detail</h2>
+      <div class="info-grid">
+        <div class="info-box">
+          <h3>Haftpflicht</h3>
+          <p>Die gesetzlich vorgeschriebene Grundversicherung. Deckt Schäden, die Sie Dritten mit Ihrem Fahrzeug zufügen.</p>
+        </div>
+        <div class="info-box">
+          <h3>Teilkasko</h3>
+          <p>Schützt bei Diebstahl, Glasbruch, Hagelschäden, Marderbiss, Brand und Naturereignissen.</p>
+        </div>
+        <div class="info-box">
+          <h3>Vollkasko</h3>
+          <p>Umfassender Schutz inkl. Kollisionsschäden am eigenen Fahrzeug – auch bei Selbstverschulden.</p>
+        </div>
+        <div class="info-box">
+          <h3>Pannenhilfe 24/7</h3>
+          <p>Tag und Nacht für Sie da – bei Pannen, Unfällen oder Fahrzeugstillstand. Schweizweit und im Ausland.</p>
+        </div>
+        <div class="info-box">
+          <h3>Bonusschutz</h3>
+          <p>Auch nach einem Schadenfall bleibt Ihre Prämie stabil. Kein Bonus-Verlust beim ersten Schaden.</p>
+        </div>
+        <div class="info-box">
+          <h3>Insassenversicherung</h3>
+          <p>Finanzielle Absicherung für alle Mitfahrenden – bei Unfall oder Invalidität.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section" id="kontakt">
+    <div class="section__inner">
+      <div class="cta-banner">
+        <div>
+          <h2>Fragen zur Autoversicherung?</h2>
+          <p>Unsere Beraterinnen und Berater helfen Ihnen gerne – kostenlos und unverbindlich.</p>
+        </div>
+        <a href="tel:0800808808" class="btn btn--white btn--lg">0800 808 808</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__col">
+        <h4>Versicherungen</h4>
+        <ul>
+          <li><a href="praemienrechner.html">Alle Versicherungen</a></li>
+          <li><a href="autoversicherung.html">Autoversicherung</a></li>
+          <li><a href="#">Hausratversicherung</a></li>
+          <li><a href="#">Rechtsschutzversicherung</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <h4>Vorsorge</h4>
+        <ul>
+          <li><a href="#">Unfallversicherung</a></li>
+          <li><a href="#">Sparversicherung</a></li>
+          <li><a href="#">Hypotheken</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <h4>Service</h4>
+        <ul>
+          <li><a href="#">Kontakt</a></li>
+          <li><a href="praemienrechner.html">Prämienrechner</a></li>
+          <li><a href="#">Schaden melden</a></li>
+          <li><a href="#">myMobiliar</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <h4>Unternehmen</h4>
+        <ul>
+          <li><a href="#">Über uns</a></li>
+          <li><a href="#">Karriere</a></li>
+          <li><a href="event.html">Events</a></li>
+          <li><a href="#">Medien</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <img src="img/mobi-logo.svg" alt="die Mobiliar" class="footer__logo" style="filter: brightness(0) invert(1);">
+      <span>© 2026 die Mobiliar – Demo</span>
+    </div>
+  </footer>
+
+  <!-- Cookie Banner -->
+  <div class="cookie-banner">
+    <div class="cookie-banner__inner">
+      <div class="cookie-banner__text">
+        <strong>Cookies & Datenschutz</strong>
+        Wir verwenden Cookies, um Ihnen ein optimales Erlebnis zu bieten.
+      </div>
+      <div class="cookie-banner__actions">
+        <button class="btn btn--primary btn--sm" data-consent="accept">Akzeptieren</button>
+        <button class="btn btn--outline btn--sm" data-consent="reject">Ablehnen</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

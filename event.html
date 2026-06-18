@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zibelemärit-Apéro 2026 | die Mobiliar</title>
+  <meta name="description" content="Die Mobiliar lädt ein zum Zibelemärit-Apéro 2026 in Bern. Feiern Sie mit uns den Berner Traditionsanlass.">
+  <link rel="icon" href="img/favicon.ico">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- DEMO Banner -->
+  <div class="demo-banner">Demo Zwecke – Keine offizielle Seite der Mobiliar</div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header__inner">
+      <a href="index.html" class="header__logo">
+        <img src="img/mobi-logo.svg" alt="die Mobiliar">
+      </a>
+      <nav class="header__nav">
+        <a href="index.html">Startseite</a>
+        <a href="praemienrechner.html">Versicherungen</a>
+        <a href="autoversicherung.html">Autoversicherung</a>
+        <a href="event.html" class="active">Events</a>
+        <a href="#anmeldung" class="btn btn--primary btn--sm">Jetzt anmelden</a>
+      </nav>
+      <div class="header__burger" aria-label="Navigation öffnen">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Event Hero -->
+  <section class="event-hero">
+    <div class="section__inner" style="max-width: 800px;">
+      <p style="font-size: 14px; text-transform: uppercase; letter-spacing: 3px; opacity: 0.8; margin-bottom: 16px;">Die Mobiliar präsentiert</p>
+      <h1 style="font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 16px;">Zibelemärit-Apéro 2026</h1>
+      <p style="font-size: 1.2rem; opacity: 0.9; max-width: 600px; margin: 0 auto 32px;">
+        Feiern Sie mit uns den Berner Traditionsanlass – mit feinem Essen, guter Gesellschaft und einem Gläschen Wein.
+      </p>
+
+      <div class="event-details">
+        <div class="event-detail-card">
+          <div class="event-detail-card__icon">📅</div>
+          <h3>Datum</h3>
+          <p>Montag, 23. November 2026</p>
+        </div>
+        <div class="event-detail-card">
+          <div class="event-detail-card__icon">🕐</div>
+          <h3>Zeit</h3>
+          <p>11:00 – 14:00 Uhr</p>
+        </div>
+        <div class="event-detail-card">
+          <div class="event-detail-card__icon">📍</div>
+          <h3>Ort</h3>
+          <p>Bundesplatz 15, 3011 Bern<br>Generalagentur Bern</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <div class="breadcrumb__inner">
+      <a href="index.html">Startseite</a>
+      <span>›</span>
+      <a href="event.html">Events</a>
+      <span>›</span>
+      <span>Zibelemärit-Apéro 2026</span>
+    </div>
+  </div>
+
+  <!-- Event Details -->
+  <section class="section">
+    <div class="section__inner">
+      <div class="two-col">
+        <div>
+          <h2>Das erwartet Sie</h2>
+          <p style="color: var(--mobi-gray-600); margin: 16px 0 24px;">
+            Der Zibelemärit ist einer der beliebtesten Traditionsanlässe in Bern. Die Mobiliar feiert mit – und lädt Sie herzlich zum exklusiven Apéro ein.
+          </p>
+          <ul class="features-list">
+            <li>Feiner Apéro mit regionalen Spezialitäten und Glühwein</li>
+            <li>Networking mit Kundinnen und Kunden der GA Bern</li>
+            <li>Persönliche Versicherungsberatung in lockerer Atmosphäre</li>
+            <li>Verlosung: Gewinnen Sie ein Wellness-Weekend für 2 Personen</li>
+            <li>Idealer Treffpunkt inmitten des Zibelemärit-Trubels</li>
+          </ul>
+        </div>
+        <div style="text-align: center;">
+          <img src="img/auto-versicherung.svg" alt="Event Illustration" style="max-width: 320px; margin: 0 auto;">
+          <div style="margin-top: 24px; background: var(--mobi-red-light); border-radius: var(--border-radius); padding: 24px;">
+            <h3 style="color: var(--mobi-red); margin-bottom: 8px;">Anmeldung erforderlich</h3>
+            <p style="font-size: 14px; color: var(--mobi-gray-600); margin: 0;">Die Plätze sind begrenzt. Melden Sie sich jetzt an, um dabei zu sein.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Registration Form -->
+  <section class="section section--gray" id="anmeldung">
+    <div class="section__inner">
+      <form class="calc-form" id="eventForm">
+        <h3>📝 Jetzt anmelden</h3>
+        <p style="font-size: 14px; color: var(--mobi-gray-600); margin-bottom: 24px;">
+          Sichern Sie sich Ihren Platz am Zibelemärit-Apéro 2026.
+        </p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="evt-vorname">Vorname</label>
+            <input type="text" id="evt-vorname" name="vorname" placeholder="Ihr Vorname" required>
+          </div>
+          <div class="form-group">
+            <label for="evt-nachname">Nachname</label>
+            <input type="text" id="evt-nachname" name="nachname" placeholder="Ihr Nachname" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="evt-email">E-Mail-Adresse</label>
+          <input type="email" id="evt-email" name="email" placeholder="ihre.email@beispiel.ch" required>
+        </div>
+
+        <div class="form-group">
+          <label for="evt-telefon">Telefonnummer (optional)</label>
+          <input type="tel" id="evt-telefon" name="telefon" placeholder="+41 79 123 45 67">
+        </div>
+
+        <div class="form-group">
+          <label for="evt-personen">Anzahl Personen</label>
+          <select id="evt-personen" name="personen" required>
+            <option value="1">1 Person</option>
+            <option value="2" selected>2 Personen</option>
+            <option value="3">3 Personen</option>
+            <option value="4">4 Personen</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="evt-bemerkung">Bemerkungen (optional)</label>
+          <input type="text" id="evt-bemerkung" name="bemerkung" placeholder="z.B. vegetarisches Essen">
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--lg" style="width: 100%; justify-content: center;">
+          Anmeldung absenden
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Info Section -->
+  <section class="section">
+    <div class="section__inner">
+      <h2 class="section__title">Gut zu wissen</h2>
+      <div class="info-grid">
+        <div class="info-box">
+          <h3>📍 Anfahrt</h3>
+          <p>Die GA Bern liegt direkt am Bundesplatz. Anreise mit ÖV empfohlen – Tram 6/7/8 bis «Zytglogge».</p>
+        </div>
+        <div class="info-box">
+          <h3>👔 Dresscode</h3>
+          <p>Kommen Sie, wie Sie sich wohlfühlen. Es handelt sich um einen ungezwungenen Anlass.</p>
+        </div>
+        <div class="info-box">
+          <h3>🌧️ Wetterhinweis</h3>
+          <p>Der Apéro findet drinnen und draussen statt. Bei Regen ist alles überdacht.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__col">
+        <h4>Versicherungen</h4>
+        <ul>
+          <li><a href="praemienrechner.html">Alle Versicherungen</a></li>
+          <li><a href="autoversicherung.html">Autoversicherung</a></li>
+          <li><a href="#">Hausratversicherung</a></li>
+          <li><a href="#">Rechtsschutzversicherung</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <h4>Vorsorge</h4>
+        <ul>
+          <li><a href="#">Unfallversicherung</a></li>
+          <li><a href="#">Sparversicherung</a></li>
+          <li><a href="#">Hypotheken</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <h4>Service</h4>
+        <ul>
+          <li><a href="#">Kontakt</a></li>
+          <li><a href="praemienrechner.html">Prämienrechner</a></li>
+          <li><a href="#">Schaden melden</a></li>
+          <li><a href="#">myMobiliar</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <h4>Unternehmen</h4>
+        <ul>
+          <li><a href="#">Über uns</a></li>
+          <li><a href="#">Karriere</a></li>
+          <li><a href="event.html">Events</a></li>
+          <li><a href="#">Medien</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <img src="img/mobi-logo.svg" alt="die Mobiliar" class="footer__logo" style="filter: brightness(0) invert(1);">
+      <span>© 2026 die Mobiliar – Demo</span>
+    </div>
+  </footer>
+
+  <!-- Cookie Banner -->
+  <div class="cookie-banner">
+    <div class="cookie-banner__inner">
+      <div class="cookie-banner__text">
+        <strong>Cookies & Datenschutz</strong>
+        Wir verwenden Cookies, um Ihnen ein optimales Erlebnis zu bieten.
+      </div>
+      <div class="cookie-banner__actions">
+        <button class="btn btn--primary btn--sm" data-consent="accept">Akzeptieren</button>
+        <button class="btn btn--outline btn--sm" data-consent="reject">Ablehnen</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
