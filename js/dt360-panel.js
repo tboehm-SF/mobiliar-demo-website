@@ -160,11 +160,11 @@
 
       // --- Identity ---
       renderSection('Identität', '🔑', [
+        row('Session / Anon-ID', '<span style="color:#60a5fa;font-weight:600">' + (sdkState.anonymousId !== '—' ? sdkState.anonymousId : '—') + '</span>'),
         row('Status', identityState.status === 'known'
           ? '<span class="dt360-id-badge known">🟢 BEKANNT</span>'
           : '<span class="dt360-id-badge anon">🟡 ANONYM</span>'),
-        row('Anonymous ID', truncateId(sdkState.anonymousId)),
-        identityState.status === 'known' ? row('E-Mail', identityState.email) : '',
+        identityState.status === 'known' ? row('E-Mail', '<span style="color:#22c55e">' + identityState.email + '</span>') : '',
         identityState.status === 'known' ? row('Name', identityState.firstName + ' ' + identityState.lastName) : '',
       ]),
 
@@ -226,8 +226,8 @@
   // --- Helpers ---
   function truncateId(id) {
     if (!id || id === '—') return '—';
-    if (id.length > 24) return '<span title="' + id + '">' + id.substring(0, 8) + '…' + id.substring(id.length - 6) + '</span>';
-    return id;
+    // Show full ID — it's important for validation
+    return '<span title="' + id + '" style="font-size:10px;word-break:break-all;line-height:1.3">' + id + '</span>';
   }
 
   function truncateUrl(url) {
@@ -278,6 +278,9 @@
 
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
+  // Track whether a form was actually submitted (user clicked "Prämie berechnen")
+  var formSubmitted = false;
+
   // --- Log an event ---
   function logEvent(payload) {
     var name = '?';
@@ -295,8 +298,14 @@
     events.push({ name: name, eventType: eventType, attrs: attrs, time: timeStr() });
     if (events.length > MAX_EVENTS) events.shift();
 
-    // Check for identity events
-    if (name === 'identity' && payload.user && payload.user.identities) {
+    // Track form submissions — this gates identity resolution display
+    if (name === 'FormSubmit' || name === 'EventRegistration') {
+      formSubmitted = true;
+    }
+
+    // Only resolve identity when it follows an actual form submit
+    // (not from demo auto-fill persona click which also fires identity events)
+    if (name === 'identity' && formSubmitted && payload.user && payload.user.identities) {
       identityState.status = 'known';
       identityState.email = payload.user.identities.emailAddress || '';
       if (payload.user.attributes) {
