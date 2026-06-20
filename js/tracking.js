@@ -317,6 +317,26 @@
                     }
                   }
                 });
+
+                // RT Email trigger — fires branded welcome email
+                setTimeout(function() {
+                  SI.sendEvent({
+                    interaction: {
+                      name: "RT_EmailTriggered",
+                      eventType: "emailSend"
+                    },
+                    user: {
+                      attributes: {
+                        eventType: "emailSend",
+                        emailTo: email,
+                        emailSubject: "Willkommen bei der Mobiliar",
+                        emailTemplate: "Autoversicherung Welcome",
+                        channel: "Email",
+                        status: "Sent"
+                      }
+                    }
+                  });
+                }, 800);
               }
             })
           ].filter(Boolean)
@@ -418,6 +438,26 @@
                     }
                   }
                 });
+
+                // RT Email trigger — fires branded event confirmation email
+                setTimeout(function() {
+                  SI.sendEvent({
+                    interaction: {
+                      name: "RT_EmailTriggered",
+                      eventType: "emailSend"
+                    },
+                    user: {
+                      attributes: {
+                        eventType: "emailSend",
+                        emailTo: email,
+                        emailSubject: "Anmeldebestätigung Zibelemärit-Apéro",
+                        emailTemplate: "Event Registration Confirmation",
+                        channel: "Email",
+                        status: "Sent"
+                      }
+                    }
+                  });
+                }, 800);
               }
             })
           ].filter(Boolean)

@@ -13,6 +13,7 @@
   var isOpen = false;
   var identityState = { status: 'anonymous', email: '', firstName: '', lastName: '' };
   var consentState = { status: 'Ausstehend', timestamp: null };
+  var emailState = { sent: false, to: '', subject: '', template: '', timestamp: null };
   var sdkState = { loaded: false, sitemapReady: false, anonymousId: '—' };
 
   // --- Inject Styles ---
@@ -86,6 +87,10 @@
     'max-height:40px;overflow:hidden;text-overflow:ellipsis}',
     '.dt360-evt.identity .dt360-evt-name{color:#22c55e}',
     '.dt360-evt.consent .dt360-evt-name{color:#facc15}',
+    '.dt360-evt.email .dt360-evt-name{color:#da2323}',
+    '.dt360-evt.email{background:rgba(218,35,35,.08);border-color:rgba(218,35,35,.15)}',
+    '.dt360-email-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;',
+    'font-size:10px;font-weight:700;letter-spacing:.5px;background:rgba(218,35,35,.12);color:#da2323;border:1px solid rgba(218,35,35,.2)}',
 
     /* Empty state */
     '.dt360-empty{text-align:center;padding:16px 0;color:#52525b;font-size:11px;font-style:italic}',
@@ -181,6 +186,15 @@
         consentState.timestamp ? row('Zeitpunkt', consentState.timestamp) : '',
       ]),
 
+      // --- RT Email / Channel ---
+      emailState.sent ? renderSection('RT Email', '📧', [
+        row('Status', '<span class="dt360-email-badge">✓ DELIVERED</span>'),
+        row('Empfänger', '<span style="color:#da2323">' + emailState.to + '</span>'),
+        row('Betreff', emailState.subject),
+        row('Template', emailState.template),
+        row('Zeitpunkt', emailState.timestamp),
+      ]) : '',
+
       // --- Event Log ---
       renderSection('Ereignis-Log (' + events.length + ')', '📡',
         events.length > 0
@@ -206,6 +220,7 @@
     var cls = 'dt360-evt';
     if (evt.name === 'identity' || evt.name === 'contactPointEmail') cls += ' identity';
     if (evt.name === 'ConsentGranted' || evt.name === 'ConsentRejected') cls += ' consent';
+    if (evt.name === 'RT_EmailTriggered') cls += ' email';
 
     var attrs = '';
     if (evt.attrs && Object.keys(evt.attrs).length > 0) {
@@ -214,6 +229,19 @@
         if (k !== 'eventType') attrParts.push(k + '=' + evt.attrs[k]);
       });
       if (attrParts.length > 0) attrs = '<div class="dt360-evt-attrs">' + attrParts.join(' · ') + '</div>';
+    }
+
+    // Special rendering for email events
+    if (evt.name === 'RT_EmailTriggered') {
+      var emailTo = (evt.attrs && evt.attrs.emailTo) || '?';
+      var emailSubject = (evt.attrs && evt.attrs.emailSubject) || '';
+      return '<div class="' + cls + '">' +
+        '<div class="dt360-evt-hdr"><span class="dt360-evt-name">📧 RT Email Sent</span>' +
+        '<span class="dt360-evt-time">' + evt.time + '</span></div>' +
+        '<div style="margin-top:4px"><span class="dt360-email-badge">✓ DELIVERED</span></div>' +
+        '<div class="dt360-evt-attrs" style="margin-top:4px;max-height:none">To: ' + emailTo +
+        (emailSubject ? '<br>Subject: ' + emailSubject : '') + '</div>' +
+        '</div>';
     }
 
     return '<div class="' + cls + '">' +
@@ -301,6 +329,15 @@
     // Track form submissions — this gates identity resolution display
     if (name === 'FormSubmit' || name === 'EventRegistration') {
       formSubmitted = true;
+    }
+
+    // Track RT email events
+    if (name === 'RT_EmailTriggered' && payload.user && payload.user.attributes) {
+      emailState.sent = true;
+      emailState.to = payload.user.attributes.emailTo || '';
+      emailState.subject = payload.user.attributes.emailSubject || '';
+      emailState.template = payload.user.attributes.emailTemplate || '';
+      emailState.timestamp = timeStr();
     }
 
     // Only resolve identity when it follows an actual form submit

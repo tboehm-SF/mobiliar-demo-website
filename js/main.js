@@ -104,6 +104,32 @@ document.addEventListener('DOMContentLoaded', () => {
       // Show success toast
       showToast('Vielen Dank! Wir kontaktieren Sie in Kürze.');
 
+      // Trigger RT branded email send
+      const emailAddr = data.get('email');
+      if (emailAddr) {
+        const product = currentPage === 'autoversicherung.html' ? 'Autoversicherung'
+          : currentPage === 'event.html' ? 'Zibelemärit-Apéro 2026'
+          : 'Versicherung';
+
+        fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: emailAddr,
+            firstName: data.get('vorname') || '',
+            lastName: data.get('nachname') || '',
+            product: product
+          })
+        })
+        .then(r => r.json())
+        .then(result => {
+          console.log('[Mobiliar] RT Email:', result);
+        })
+        .catch(err => {
+          console.warn('[Mobiliar] Email send failed:', err);
+        });
+      }
+
       // Reset after delay
       setTimeout(() => form.reset(), 2000);
     });
