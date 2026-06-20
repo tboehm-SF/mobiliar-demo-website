@@ -14,7 +14,9 @@ app.use(express.static(path.join(__dirname), {
 }));
 
 // ============================================================
-// POST /api/send-email — Proxy email send to Salesforce Apex REST
+// POST /api/send-email — Publish Platform Event to Salesforce
+// The Apex trigger on Mobi_Email_Notification__e fires the
+// branded email asynchronously via the event bus.
 // ============================================================
 app.post('/api/send-email', async (req, res) => {
   const { email, firstName, lastName, product } = req.body;
@@ -28,36 +30,57 @@ app.post('/api/send-email', async (req, res) => {
   const sfAccessToken = process.env.SF_ACCESS_TOKEN;
 
   if (!sfInstanceUrl || !sfAccessToken) {
-    console.warn('[Email] SF credentials not configured — simulating send');
-    // In demo mode without SF credentials, simulate success
+    console.warn('[Email] SF credentials not configured — simulating Platform Event publish');
     return res.json({
       success: true,
-      message: 'Email simulated (SF credentials not configured)',
+      message: 'Platform Event simulated (SF credentials not configured)',
       email: email,
       simulated: true
     });
   }
 
+  // Build the platform event payload
+  const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Kundin / Kunde';
+  const productLabel = product || 'Versicherung';
+  const subjectLine = `Willkommen bei der Mobiliar – Ihre ${productLabel}`;
+
+  const platformEvent = {
+    Recipient_Email__c: email,
+    Recipient_Name__c: fullName,
+    Subject_Line__c: subjectLine,
+    Product__c: productLabel
+  };
+
   try {
-    const response = await fetch(`${sfInstanceUrl}/services/apexrest/mobi/welcome-email`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${sfAccessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, firstName, lastName, product })
-    });
+    // Publish Platform Event via Salesforce REST API
+    const response = await fetch(
+      `${sfInstanceUrl}/services/data/v62.0/sobjects/Mobi_Email_Notification__e`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${sfAccessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(platformEvent)
+      }
+    );
 
-    const text = await response.text();
-    let data;
-    try { data = JSON.parse(text); } catch(e) { data = { raw: text }; }
+    const data = await response.json();
 
-    if (response.ok) {
-      console.log(`[Email] Sent to ${email} via Salesforce`);
-      res.json({ success: true, message: `Email sent to ${email}`, data });
+    if (response.ok && data.success) {
+      console.log(`[Email] Platform Event published for ${email} (id: ${data.id})`);
+      res.json({
+        success: true,
+        message: `Platform Event published → email will be sent to ${email}`,
+        eventId: data.id,
+        mechanism: 'Platform Event → Apex Trigger → Branded Email'
+      });
     } else {
-      console.error(`[Email] SF error: ${response.status}`, text);
-      res.status(response.status).json({ error: 'Salesforce email failed', details: data });
+      console.error(`[Email] SF Platform Event error:`, data);
+      res.status(response.status || 500).json({
+        error: 'Failed to publish Platform Event',
+        details: data
+      });
     }
   } catch (err) {
     console.error('[Email] Network error:', err.message);
