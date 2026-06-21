@@ -46,9 +46,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Hook for Data Cloud SDK (added later)
       if (window.SalesforceInteractions) {
-        window.SalesforceInteractions.setConsent({
-          consent: consent === 'accept' ? 'OptIn' : 'OptOut'
-        });
+        try {
+          window.SalesforceInteractions.setConsent({
+            consent: consent === 'accept' ? 'OptIn' : 'OptOut'
+          });
+        } catch(e) {
+          // setConsent may not exist on this SDK version — consent tracked via sitemap listener
+        }
       }
     });
   });
