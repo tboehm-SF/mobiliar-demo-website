@@ -208,8 +208,25 @@
     }
     .evt-card__header {
       position: relative;
-      height: 200px;
+      height: 220px;
       overflow: hidden;
+    }
+    .evt-card__header-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .evt-card:hover .evt-card__header-img {
+      transform: scale(1.08);
+    }
+    .evt-card__header-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.5) 0%, rgba(0,0,0,.05) 60%);
+      z-index: 1;
     }
     .evt-card__gradient {
       position: absolute;
@@ -553,6 +570,199 @@
       margin: 0;
     }
 
+    /* ── Pricing Badge on Cards ── */
+    .evt-card__price-badge {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: var(--border-radius-pill);
+      backdrop-filter: blur(12px);
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .evt-card__price-badge.free {
+      background: rgba(34,197,94,.85);
+      color: #fff;
+    }
+    .evt-card__price-badge.paid {
+      background: rgba(255,255,255,.92);
+      color: var(--mobi-black);
+    }
+    .evt-card__price-badge .original-price {
+      text-decoration: line-through;
+      color: var(--mobi-gray-500);
+      font-weight: 400;
+      font-size: 12px;
+    }
+    .evt-card__price-badge .reduced-price {
+      color: var(--mobi-red);
+      font-weight: 700;
+    }
+    .evt-card__price-badge .early-bird-tag {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: var(--mobi-red);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: var(--border-radius-pill);
+    }
+
+    /* ── Booking Step in Modal ── */
+    .evt-booking-step {
+      background: var(--mobi-gray-100);
+      border-radius: 12px;
+      padding: var(--space-xl);
+      margin: var(--space-xl) 0;
+      border: 1px solid var(--mobi-gray-200);
+    }
+    .evt-booking-step__header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+    .evt-booking-step__number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--mobi-red);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .evt-booking-step__title {
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .evt-price-comparison {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xl);
+      justify-content: center;
+      margin: var(--space-lg) 0;
+    }
+    .evt-price-box {
+      text-align: center;
+      padding: var(--space-lg) var(--space-xl);
+      border-radius: 12px;
+      flex: 1;
+      max-width: 220px;
+      transition: all 0.3s ease;
+    }
+    .evt-price-box.regular {
+      background: var(--mobi-gray-200);
+      opacity: 0.7;
+    }
+    .evt-price-box.reduced {
+      background: var(--mobi-red-light);
+      border: 2px solid var(--mobi-red);
+      box-shadow: 0 4px 20px rgba(218,35,35,.15);
+      transform: scale(1.05);
+    }
+    .evt-price-box__label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--mobi-gray-500);
+      margin-bottom: 4px;
+    }
+    .evt-price-box.reduced .evt-price-box__label {
+      color: var(--mobi-red);
+    }
+    .evt-price-box__amount {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .evt-price-box.regular .evt-price-box__amount {
+      text-decoration: line-through;
+      color: var(--mobi-gray-500);
+    }
+    .evt-price-box.reduced .evt-price-box__amount {
+      color: var(--mobi-red);
+    }
+    .evt-price-box__note {
+      font-size: 11px;
+      color: var(--mobi-gray-500);
+      margin-top: 4px;
+    }
+    .evt-price-arrow {
+      font-size: 1.5rem;
+      color: var(--mobi-red);
+      flex-shrink: 0;
+    }
+    .evt-savings-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 20px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #fff;
+      border-radius: var(--border-radius-pill);
+      font-weight: 700;
+      font-size: 14px;
+      margin-top: var(--space-md);
+      animation: savingsPulse 2s ease-in-out infinite;
+    }
+    @keyframes savingsPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+    .evt-price-free {
+      text-align: center;
+      padding: var(--space-xl);
+    }
+    .evt-price-free__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 32px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #fff;
+      border-radius: var(--border-radius-pill);
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+    .evt-price-free__note {
+      font-size: 13px;
+      color: var(--mobi-gray-500);
+      margin-top: var(--space-sm);
+    }
+
+    /* Modal image header */
+    .evt-modal__header-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .evt-modal__header-gradient {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.7) 0%, rgba(0,0,0,.2) 100%);
+    }
+    .evt-modal__header {
+      min-height: 200px;
+    }
+    .evt-modal__header-content {
+      position: relative;
+      z-index: 2;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 768px) {
       .evt-grid { grid-template-columns: 1fr; }
@@ -651,8 +861,10 @@
       <h2 class="section__title">Nächster Event</h2>
       <div class="evt-spotlight">
         <div class="evt-spotlight__inner">
-          <div class="evt-spotlight__visual">
-            <div style="position: relative; z-index: 2;">
+          <div class="evt-spotlight__visual" style="position: relative; padding: 0;">
+            <img src="img/evt-familientag.jpg" alt="Mobiliar Familientag" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;">
+            <div style="position: absolute; inset: 0; background: linear-gradient(135deg, rgba(249,115,22,.85) 0%, rgba(194,65,12,.9) 100%);"></div>
+            <div style="position: relative; z-index: 2; padding: var(--space-2xl); text-align: center;">
               <p style="font-size: 13px; text-transform: uppercase; letter-spacing: 3px; opacity: .7; margin-bottom: 12px;">Kundenanlass</p>
               <h2 style="color: #fff; font-size: clamp(1.5rem, 3vw, 2.2rem); margin-bottom: var(--space-lg);">Mobiliar Familientag</h2>
               <div class="evt-countdown" id="spotlightCountdown">
@@ -727,13 +939,14 @@
         <!-- EVT-00003: Mobiliar Familientag -->
         <div class="evt-card" data-type="Kundenanlass" data-event-id="a32J60000009PwGIAU">
           <div class="evt-card__header">
-            <div class="evt-card__gradient" style="background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%);"></div>
+            <img class="evt-card__header-img" src="img/evt-familientag.jpg" alt="Mobiliar Familientag" loading="lazy">
+            <div class="evt-card__header-overlay"></div>
             <span class="evt-card__type-badge kundenanlass">Kundenanlass</span>
             <div class="evt-card__date-box">
               <div class="evt-card__date-day">22</div>
               <div class="evt-card__date-month">Aug</div>
             </div>
-            <div class="evt-card__header-icon">👨‍👩‍👧‍👦</div>
+            <div class="evt-card__price-badge free">✓ Kostenlos</div>
           </div>
           <div class="evt-card__body">
             <h3 class="evt-card__title">Mobiliar Familientag</h3>
@@ -765,13 +978,18 @@
         <!-- EVT-00001: Mobiliar KMU Forum -->
         <div class="evt-card" data-type="Kundenanlass" data-event-id="a32J60000009Pw6IAE">
           <div class="evt-card__header">
-            <div class="evt-card__gradient" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);"></div>
+            <img class="evt-card__header-img" src="img/evt-kmu-forum.jpg" alt="Mobiliar KMU Forum" loading="lazy">
+            <div class="evt-card__header-overlay"></div>
             <span class="evt-card__type-badge kundenanlass">Kundenanlass</span>
             <div class="evt-card__date-box">
               <div class="evt-card__date-day">18</div>
               <div class="evt-card__date-month">Sep</div>
             </div>
-            <div class="evt-card__header-icon">💼</div>
+            <div class="evt-card__price-badge paid">
+              <span class="original-price">CHF 89</span>
+              <span class="reduced-price">CHF 59</span>
+              <span class="early-bird-tag">Early Bird</span>
+            </div>
           </div>
           <div class="evt-card__body">
             <h3 class="evt-card__title">Mobiliar KMU Forum</h3>
@@ -803,13 +1021,18 @@
         <!-- EVT-00002: Nachhaltigkeits-Dialog -->
         <div class="evt-card" data-type="Networking" data-event-id="a32J60000009PwBIAU">
           <div class="evt-card__header">
-            <div class="evt-card__gradient" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #15803d 100%);"></div>
+            <img class="evt-card__header-img" src="img/evt-nachhaltigkeit.jpg" alt="Nachhaltigkeits-Dialog" loading="lazy">
+            <div class="evt-card__header-overlay"></div>
             <span class="evt-card__type-badge networking">Networking</span>
             <div class="evt-card__date-box">
               <div class="evt-card__date-day">10</div>
               <div class="evt-card__date-month">Okt</div>
             </div>
-            <div class="evt-card__header-icon">🌿</div>
+            <div class="evt-card__price-badge paid">
+              <span class="original-price">CHF 45</span>
+              <span class="reduced-price">CHF 29</span>
+              <span class="early-bird-tag">Early Bird</span>
+            </div>
           </div>
           <div class="evt-card__body">
             <h3 class="evt-card__title">Nachhaltigkeits-Dialog</h3>
@@ -841,13 +1064,18 @@
         <!-- EVT-00004: Digital Innovation Night -->
         <div class="evt-card" data-type="Networking" data-event-id="a32J60000009PwLIAU">
           <div class="evt-card__header">
-            <div class="evt-card__gradient" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%);"></div>
+            <img class="evt-card__header-img" src="img/evt-innovation.jpg" alt="Digital Innovation Night" loading="lazy">
+            <div class="evt-card__header-overlay"></div>
             <span class="evt-card__type-badge networking">Networking</span>
             <div class="evt-card__date-box">
               <div class="evt-card__date-day">05</div>
               <div class="evt-card__date-month">Nov</div>
             </div>
-            <div class="evt-card__header-icon">🤖</div>
+            <div class="evt-card__price-badge paid">
+              <span class="original-price">CHF 120</span>
+              <span class="reduced-price">CHF 79</span>
+              <span class="early-bird-tag">Early Bird</span>
+            </div>
           </div>
           <div class="evt-card__body">
             <h3 class="evt-card__title">Digital Innovation Night</h3>
@@ -879,13 +1107,14 @@
         <!-- EVT-00000: Zibelemärit-Apéro -->
         <div class="evt-card" data-type="Kundenanlass" data-event-id="a32J60000009PvwIAE">
           <div class="evt-card__header">
-            <div class="evt-card__gradient" style="background: linear-gradient(135deg, var(--mobi-red) 0%, #b91c1c 50%, #991b1b 100%);"></div>
+            <img class="evt-card__header-img" src="img/evt-zibelemarit.jpg" alt="Zibelemärit-Apéro" loading="lazy">
+            <div class="evt-card__header-overlay"></div>
             <span class="evt-card__type-badge kundenanlass">Kundenanlass</span>
             <div class="evt-card__date-box">
               <div class="evt-card__date-day">23</div>
               <div class="evt-card__date-month">Nov</div>
             </div>
-            <div class="evt-card__header-icon">🧅</div>
+            <div class="evt-card__price-badge free">✓ Kostenlos</div>
           </div>
           <div class="evt-card__body">
             <h3 class="evt-card__title">Zibelemärit-Apéro</h3>
@@ -1059,9 +1288,13 @@
   <div class="evt-modal-overlay" id="evtModalOverlay"></div>
   <div class="evt-modal" id="evtModal">
     <div class="evt-modal__header" id="evtModalHeader">
-      <button class="evt-modal__close" id="evtModalClose">&times;</button>
-      <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 2px; opacity: .7; margin-bottom: 8px;" id="modalType"></p>
-      <h2 style="color: #fff; margin-bottom: 8px;" id="modalTitle"></h2>
+      <img class="evt-modal__header-img" id="modalImage" src="" alt="">
+      <div class="evt-modal__header-gradient"></div>
+      <div class="evt-modal__header-content">
+        <button class="evt-modal__close" id="evtModalClose">&times;</button>
+        <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 2px; opacity: .7; margin-bottom: 8px;" id="modalType"></p>
+        <h2 style="color: #fff; margin-bottom: 8px;" id="modalTitle"></h2>
+      </div>
     </div>
     <div class="evt-modal__body">
       <div class="evt-modal__info-grid">
@@ -1090,10 +1323,23 @@
           <span id="modalCatering"></span>
         </div>
       </div>
+
       <h4 style="margin-bottom: var(--space-sm);">Über diesen Event</h4>
-      <p style="color: var(--mobi-gray-600); line-height: 1.7; margin-bottom: var(--space-xl);" id="modalDesc"></p>
+      <p style="color: var(--mobi-gray-600); line-height: 1.7; margin-bottom: var(--space-md);" id="modalDesc"></p>
+
+      <!-- Booking Step: Pricing -->
+      <div class="evt-booking-step" id="modalBookingStep">
+        <div class="evt-booking-step__header">
+          <div class="evt-booking-step__number">1</div>
+          <div class="evt-booking-step__title">Ticket & Preis</div>
+        </div>
+        <div id="modalPricingContent">
+          <!-- Dynamically filled by JS -->
+        </div>
+      </div>
+
       <a href="#anmeldung" class="btn btn--primary btn--lg" style="width: 100%; justify-content: center;" id="modalRegBtn">
-        Jetzt anmelden
+        Jetzt buchen & anmelden
       </a>
     </div>
   </div>
@@ -1120,7 +1366,11 @@
         type: 'Kundenanlass',
         dressCode: 'Casual',
         catering: 'Grillbuffet, Kindermenu, Glacewagen, vegetarische und vegane Optionen',
-        gradient: 'linear-gradient(135deg, #f97316, #c2410c)'
+        gradient: 'linear-gradient(135deg, #f97316, #c2410c)',
+        image: 'img/evt-familientag.jpg',
+        price: 0,
+        reducedPrice: 0,
+        earlyBirdDeadline: '2026-08-01'
       },
       {
         id: 'a32J60000009Pw6IAE',
@@ -1132,7 +1382,11 @@
         type: 'Kundenanlass',
         dressCode: 'Smart Casual',
         catering: 'Apéro riche mit regionalen Produkten',
-        gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)'
+        gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+        image: 'img/evt-kmu-forum.jpg',
+        price: 89,
+        reducedPrice: 59,
+        earlyBirdDeadline: '2026-08-31'
       },
       {
         id: 'a32J60000009PwBIAU',
@@ -1144,7 +1398,11 @@
         type: 'Networking',
         dressCode: 'Smart Casual',
         catering: 'Bio-Catering mit saisonalen Zutaten aus der Region',
-        gradient: 'linear-gradient(135deg, #22c55e, #15803d)'
+        gradient: 'linear-gradient(135deg, #22c55e, #15803d)',
+        image: 'img/evt-nachhaltigkeit.jpg',
+        price: 45,
+        reducedPrice: 29,
+        earlyBirdDeadline: '2026-09-15'
       },
       {
         id: 'a32J60000009PwLIAU',
@@ -1156,7 +1414,11 @@
         type: 'Networking',
         dressCode: 'Business',
         catering: 'Stehdinner mit Live-Cooking-Stationen',
-        gradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)'
+        gradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+        image: 'img/evt-innovation.jpg',
+        price: 120,
+        reducedPrice: 79,
+        earlyBirdDeadline: '2026-10-15'
       },
       {
         id: 'a32J60000009PvwIAE',
@@ -1168,7 +1430,11 @@
         type: 'Kundenanlass',
         dressCode: 'Smart Casual',
         catering: 'Berner Platte, Zibelechuche, Glühwein, alkoholfreie Optionen',
-        gradient: 'linear-gradient(135deg, #da2323, #991b1b)'
+        gradient: 'linear-gradient(135deg, #da2323, #991b1b)',
+        image: 'img/evt-zibelemarit.jpg',
+        price: 0,
+        reducedPrice: 0,
+        earlyBirdDeadline: '2026-11-01'
       }
     ];
 
@@ -1265,7 +1531,18 @@
       var d = new Date(evt.date);
       document.getElementById('modalType').textContent = evt.type;
       document.getElementById('modalTitle').textContent = evt.name;
-      document.getElementById('evtModalHeader').style.background = evt.gradient;
+
+      // Set image or gradient fallback
+      var modalImg = document.getElementById('modalImage');
+      if (evt.image) {
+        modalImg.src = evt.image;
+        modalImg.alt = evt.name;
+        modalImg.style.display = 'block';
+      } else {
+        modalImg.style.display = 'none';
+        document.getElementById('evtModalHeader').style.background = evt.gradient;
+      }
+
       document.getElementById('modalDate').textContent = weekdays[d.getDay()] + ', ' + d.getDate() + '. ' + months[d.getMonth()] + ' ' + d.getFullYear();
       document.getElementById('modalTime').textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ' Uhr';
       document.getElementById('modalLocation').textContent = evt.location;
@@ -1273,6 +1550,44 @@
       document.getElementById('modalCapacity').textContent = evt.capacity + ' Plätze';
       document.getElementById('modalCatering').textContent = evt.catering;
       document.getElementById('modalDesc').textContent = evt.description;
+
+      // ── Pricing / Booking Step ──
+      var pricingEl = document.getElementById('modalPricingContent');
+      var bookingStep = document.getElementById('modalBookingStep');
+
+      if (evt.price === 0) {
+        // Free event
+        pricingEl.innerHTML =
+          '<div class="evt-price-free">' +
+            '<div class="evt-price-free__badge">🎉 Kostenloser Eintritt</div>' +
+            '<p class="evt-price-free__note">Dieser Event ist für alle Teilnehmenden kostenlos. Melden Sie sich einfach an.</p>' +
+          '</div>';
+      } else {
+        // Paid event with early bird
+        var savings = evt.price - evt.reducedPrice;
+        var savingsPercent = Math.round((savings / evt.price) * 100);
+        var ebDate = new Date(evt.earlyBirdDeadline);
+        var ebFormatted = ebDate.getDate() + '. ' + months[ebDate.getMonth()] + ' ' + ebDate.getFullYear();
+        var isEarlyBird = new Date() < ebDate;
+
+        pricingEl.innerHTML =
+          '<div class="evt-price-comparison">' +
+            '<div class="evt-price-box regular">' +
+              '<div class="evt-price-box__label">Regulär</div>' +
+              '<div class="evt-price-box__amount">CHF ' + evt.price + '</div>' +
+              '<div class="evt-price-box__note">Standard-Preis</div>' +
+            '</div>' +
+            '<div class="evt-price-arrow">→</div>' +
+            '<div class="evt-price-box reduced">' +
+              '<div class="evt-price-box__label">' + (isEarlyBird ? '⚡ Early Bird' : 'Reduziert') + '</div>' +
+              '<div class="evt-price-box__amount">CHF ' + evt.reducedPrice + '</div>' +
+              '<div class="evt-price-box__note">' + (isEarlyBird ? 'bis ' + ebFormatted : 'Frühbucherpreis') + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="text-align: center;">' +
+            '<div class="evt-savings-badge">💰 Sie sparen CHF ' + savings + ' (' + savingsPercent + '%)</div>' +
+          '</div>';
+      }
 
       // Pre-select event in form
       var regSelect = document.getElementById('reg-event');
@@ -1288,7 +1603,7 @@
       document.body.style.overflow = 'hidden';
 
       // Track
-      if (window.__trackEvent) window.__trackEvent('Event Detail View', { eventName: evt.name, eventId: evt.id });
+      if (window.__trackEvent) window.__trackEvent('Event Detail View', { eventName: evt.name, eventId: evt.id, price: evt.price, reducedPrice: evt.reducedPrice });
     }
 
     function closeModal() {
