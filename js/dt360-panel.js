@@ -218,8 +218,8 @@
   // --- Event renderer ---
   function renderEvent(evt) {
     var cls = 'dt360-evt';
-    if (evt.name === 'identity' || evt.name === 'contactPointEmail') cls += ' identity';
-    if (evt.name === 'ConsentGranted' || evt.name === 'ConsentRejected') cls += ' consent';
+    if (evt.name === 'identity' || evt.name === 'Identity Capture' || evt.name === 'contactPointEmail') cls += ' identity';
+    if (evt.name === 'ConsentGranted' || evt.name === 'Consent Granted' || evt.name === 'ConsentRejected' || evt.name === 'Consent Rejected') cls += ' consent';
     if (evt.name === 'RT_EmailTriggered') cls += ' email';
 
     var attrs = '';
@@ -327,7 +327,8 @@
     if (events.length > MAX_EVENTS) events.shift();
 
     // Track form submissions — this gates identity resolution display
-    if (name === 'FormSubmit' || name === 'EventRegistration') {
+    // Match both spaced and unspaced variants from tracking.js
+    if (name === 'FormSubmit' || name === 'Form Submit' || name === 'EventRegistration' || name === 'Event Registration') {
       formSubmitted = true;
     }
 
@@ -340,24 +341,29 @@
       emailState.timestamp = timeStr();
     }
 
-    // Only resolve identity when it follows an actual form submit
-    // (not from demo auto-fill persona click which also fires identity events)
-    if (name === 'identity' && formSubmitted && payload.user && payload.user.identities) {
-      identityState.status = 'known';
-      identityState.email = payload.user.identities.emailAddress || '';
-      if (payload.user.attributes) {
-        identityState.firstName = payload.user.attributes.firstName || '';
-        identityState.lastName = payload.user.attributes.lastName || '';
+    // Resolve identity from the identity event fired by tracking.js
+    // tracking.js sends: interaction.name = 'Identity Capture', user.attributes.eventType = 'identity'
+    // Also support: interaction.name = 'identity' for direct SDK usage
+    var isIdentityEvent = (name === 'Identity Capture' || name === 'identity');
+    var hasIdentityAttr = (attrs && attrs.eventType === 'identity');
+    if ((isIdentityEvent || hasIdentityAttr) && formSubmitted && payload.user) {
+      var userAttrs = payload.user.attributes || {};
+      var email = userAttrs.email || (payload.user.identities && payload.user.identities.emailAddress) || '';
+      if (email) {
+        identityState.status = 'known';
+        identityState.email = email;
+        identityState.firstName = userAttrs.firstName || '';
+        identityState.lastName = userAttrs.lastName || '';
+        // Flash the badge if visible
+        flashIdentityBadge();
       }
-      // Flash the badge if visible
-      flashIdentityBadge();
     }
 
-    // Check for consent events
-    if (name === 'ConsentGranted') {
+    // Check for consent events (match both spaced and unspaced variants)
+    if (name === 'ConsentGranted' || name === 'Consent Granted') {
       consentState.status = 'OptIn';
       consentState.timestamp = timeStr();
-    } else if (name === 'ConsentRejected') {
+    } else if (name === 'ConsentRejected' || name === 'Consent Rejected') {
       consentState.status = 'OptOut';
       consentState.timestamp = timeStr();
     }
