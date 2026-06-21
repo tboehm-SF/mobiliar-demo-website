@@ -99,6 +99,25 @@
     }
 
     // =======================================================
+    // 0. INITIALIZE SDK — required for cookie/anonymousId
+    //    The beacon CDN script auto-registers the tenant but
+    //    SI.init() must be called to activate tracking.
+    //    cookieDomain should match the production domain.
+    // =======================================================
+    try {
+      var cookieDomain = window.location.hostname.includes('herokuapp.com')
+        ? '.herokuapp.com'
+        : window.location.hostname;
+
+      SI.init({
+        cookieDomain: cookieDomain
+      });
+      log('SDK initialized', { cookieDomain: cookieDomain, anonymousId: SI.getAnonymousId() });
+    } catch(initErr) {
+      log('SDK init error (non-fatal)', initErr);
+    }
+
+    // =======================================================
     // 1. SITEMAP — defines pageTypes, contentZones, and listeners
     //    Registers page structure for beacon recognition
     //    Uses SI.listener (available on this SDK version) for
