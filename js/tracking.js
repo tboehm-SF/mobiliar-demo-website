@@ -42,6 +42,7 @@ SalesforceInteractions.init({
         if (file === 'praemienrechner.html') return 'praemienrechner';
         if (file === 'autoversicherung.html') return 'autoversicherung';
         if (file === 'event.html') return 'event';
+        if (file === 'veranstaltungen.html') return 'veranstaltungen';
         return 'other';
     }
 
@@ -53,6 +54,7 @@ SalesforceInteractions.init({
         praemienrechner: 'Prämienrechner View',
         autoversicherung: 'Autoversicherung View',
         event: 'Event Page View',
+        veranstaltungen: 'Veranstaltungen Overview View',
         other: 'Page View'
     };
 
@@ -83,6 +85,18 @@ SalesforceInteractions.init({
                 name: 'Prämienrechner',
                 category: 'Versicherungen',
                 contentType: 'Product Hub'
+            }
+        };
+    } else if (pageType === 'veranstaltungen') {
+        pageViewEvent.interaction.catalogObject = {
+            type: 'Article',
+            id: 'veranstaltungen-overview-2026',
+            attributes: {
+                name: 'Veranstaltungen 2026',
+                category: 'Events',
+                contentType: 'Event Hub',
+                totalEvents: '5',
+                cities: 'Luzern, Zürich, Bern, Basel'
             }
         };
     } else if (pageType === 'event') {
@@ -223,6 +237,13 @@ SalesforceInteractions.init({
                 { selector: '#autoCalcForm', name: 'Section View - Prämienrechner Form' },
                 { selector: '#kontakt', name: 'Section View - Kontakt' }
             ];
+        } else if (pageType === 'veranstaltungen') {
+            trackedSections = [
+                { selector: '.evt-hero', name: 'Section View - Veranstaltungen Hero' },
+                { selector: '#naechster-event', name: 'Section View - Nächster Event Spotlight' },
+                { selector: '#alle-events', name: 'Section View - Alle Events Grid' },
+                { selector: '#anmeldung', name: 'Section View - Event Registration Form' }
+            ];
         } else if (pageType === 'event') {
             trackedSections = [
                 { selector: '.event-hero', name: 'Section View - Event Hero' },
@@ -317,6 +338,80 @@ SalesforceInteractions.init({
                     log('Form Submit: autoCalcForm', { email: email, marke: fd.get('marke') });
 
                     // 2. Identity stitching — marks this device as a known user
+                    if (email) {
+                        SalesforceInteractions.sendEvent({
+                            interaction: {
+                                name: 'Identity Capture'
+                            },
+                            user: {
+                                attributes: {
+                                    eventType: 'identity',
+                                    firstName: vorname || '',
+                                    lastName: nachname || '',
+                                    email: email,
+                                    isAnonymous: false
+                                }
+                            }
+                        });
+                        log('Identity Stitched: ' + email);
+                    }
+                });
+            }
+        }
+
+        // --- Veranstaltungen Registration Form ---
+        if (pageType === 'veranstaltungen') {
+            var evtRegForm = document.getElementById('eventRegForm');
+            if (evtRegForm) {
+                var evtRegStarted = false;
+
+                evtRegForm.addEventListener('focusin', function () {
+                    if (evtRegStarted) return;
+                    evtRegStarted = true;
+                    SalesforceInteractions.sendEvent({
+                        interaction: {
+                            name: 'Event Registration Start',
+                            eventType: 'websiteEngagement'
+                        }
+                    });
+                    log('Event Registration Start: eventRegForm');
+                });
+
+                evtRegForm.addEventListener('submit', function (e) {
+                    var fd = new FormData(evtRegForm);
+                    var email = fd.get('email');
+                    var vorname = fd.get('vorname');
+                    var nachname = fd.get('nachname');
+                    var selectedEvent = fd.get('event');
+
+                    // Find event name from select option
+                    var eventSelect = document.getElementById('reg-event');
+                    var eventName = eventSelect ? eventSelect.options[eventSelect.selectedIndex].text : '';
+
+                    SalesforceInteractions.sendEvent({
+                        interaction: {
+                            name: 'Event Registration',
+                            eventType: 'websiteEngagement',
+                            catalogObject: {
+                                type: 'Article',
+                                id: 'event-registration-' + (selectedEvent || 'unknown'),
+                                attributes: {
+                                    name: eventName,
+                                    category: 'Events',
+                                    contentType: 'Event Registration',
+                                    personen: fd.get('personen') || '1'
+                                }
+                            }
+                        },
+                        user: {
+                            attributes: {
+                                eventType: 'contactPointEmail',
+                                email: email
+                            }
+                        }
+                    });
+                    log('Event Registration: veranstaltungen', { email: email, event: eventName });
+
                     if (email) {
                         SalesforceInteractions.sendEvent({
                             interaction: {

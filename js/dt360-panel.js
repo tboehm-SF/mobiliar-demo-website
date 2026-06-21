@@ -278,6 +278,7 @@
     if (file === 'praemienrechner.html') return 'Praemienrechner';
     if (file === 'autoversicherung.html') return 'Autoversicherung';
     if (file === 'event.html') return 'Event';
+    if (file === 'veranstaltungen.html') return 'Veranstaltungen';
     return file;
   }
 
@@ -286,7 +287,8 @@
       'Homepage': 'home_hero, home_products, home_categories, home_cta',
       'Praemienrechner': 'praemienrechner_hero, praemienrechner_grid',
       'Autoversicherung': 'auto_hero, auto_calculator, auto_leistungen, auto_cta',
-      'Event': 'event_hero, event_details, event_registration, event_info'
+      'Event': 'event_hero, event_details, event_registration, event_info',
+      'Veranstaltungen': 'evt_hero, evt_spotlight, evt_grid, evt_filters, evt_registration, evt_modal'
     };
     var global = 'global_header, global_popup, global_footer, cookie_banner';
     var page = zones[pageType] || '';

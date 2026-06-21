@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Veranstaltungen | die Mobiliar</title>
+  <meta name="description" content="Die Mobiliar Events – Networking, Weiterbildung und exklusive Kundenanlässe in der ganzen Schweiz. Melden Sie sich jetzt an.">
+  <link rel="icon" href="img/favicon.ico">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Data Cloud Web SDK -->
+  <script src="https://cdn.c360a.salesforce.com/beacon/c360a/7883b86d-d643-45ad-95e2-2a436400734d/scripts/c360a.min.js"></script>
+  <style>
+    /* ── Events Page – Animations & Morph Effects ── */
+
+    /* Stagger reveal for event cards */
+    .evt-card { opacity: 0; transform: translateY(40px) scale(0.97); }
+    .evt-card.visible {
+      animation: evtCardIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .evt-card:nth-child(2).visible { animation-delay: 0.12s; }
+    .evt-card:nth-child(3).visible { animation-delay: 0.24s; }
+    .evt-card:nth-child(4).visible { animation-delay: 0.36s; }
+    .evt-card:nth-child(5).visible { animation-delay: 0.48s; }
+
+    @keyframes evtCardIn {
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Hero parallax & text reveal */
+    .evt-hero {
+      position: relative;
+      min-height: 520px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d0a0a 40%, var(--mobi-red) 100%);
+    }
+    .evt-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(218,35,35,.25) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 30%, rgba(218,35,35,.15) 0%, transparent 50%);
+      animation: heroGlow 8s ease-in-out infinite alternate;
+    }
+    @keyframes heroGlow {
+      0% { opacity: 0.6; transform: scale(1); }
+      100% { opacity: 1; transform: scale(1.05); }
+    }
+
+    .evt-hero__content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      max-width: 800px;
+      padding: var(--space-3xl) var(--space-lg);
+      color: var(--mobi-white);
+    }
+    .evt-hero__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: var(--border-radius-pill);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.85);
+      margin-bottom: var(--space-lg);
+      backdrop-filter: blur(8px);
+      animation: badgeFade 1s ease forwards;
+      opacity: 0;
+    }
+    @keyframes badgeFade { to { opacity: 1; } }
+
+    .evt-hero__badge .pulse-dot {
+      width: 6px; height: 6px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulseDot 2s ease-in-out infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .4; transform: scale(.7); }
+    }
+
+    .evt-hero__title {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      color: var(--mobi-white);
+      margin-bottom: var(--space-md);
+      animation: heroTextIn 0.8s ease forwards;
+      animation-delay: 0.2s;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    @keyframes heroTextIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .evt-hero__subtitle {
+      font-size: 1.15rem;
+      opacity: 0;
+      color: rgba(255,255,255,.85);
+      max-width: 600px;
+      margin: 0 auto var(--space-xl);
+      line-height: 1.6;
+      animation: heroTextIn 0.8s ease forwards;
+      animation-delay: 0.4s;
+    }
+    .evt-hero__stats {
+      display: flex;
+      gap: var(--space-2xl);
+      justify-content: center;
+      margin-top: var(--space-xl);
+      opacity: 0;
+      animation: heroTextIn 0.8s ease forwards;
+      animation-delay: 0.6s;
+    }
+    .evt-hero__stat {
+      text-align: center;
+    }
+    .evt-hero__stat-value {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--mobi-white);
+      line-height: 1;
+    }
+    .evt-hero__stat-label {
+      font-size: 13px;
+      color: rgba(255,255,255,.6);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Floating shapes (decorative) */
+    .evt-hero__shape {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(218,35,35,.08);
+      border: 1px solid rgba(218,35,35,.1);
+      animation: floatShape 20s ease-in-out infinite;
+    }
+    .evt-hero__shape:nth-child(1) { width: 300px; height: 300px; top: -80px; right: -60px; animation-delay: 0s; }
+    .evt-hero__shape:nth-child(2) { width: 200px; height: 200px; bottom: -40px; left: -40px; animation-delay: -7s; }
+    .evt-hero__shape:nth-child(3) { width: 150px; height: 150px; top: 60%; right: 20%; animation-delay: -14s; }
+    @keyframes floatShape {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(20px, -15px) rotate(3deg); }
+      50% { transform: translate(-10px, 10px) rotate(-2deg); }
+      75% { transform: translate(15px, 20px) rotate(4deg); }
+    }
+
+    /* ── Filter Tabs ── */
+    .evt-filters {
+      display: flex;
+      gap: var(--space-sm);
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: var(--space-2xl);
+    }
+    .evt-filter-btn {
+      padding: 10px 24px;
+      border: 1px solid var(--mobi-gray-300);
+      border-radius: var(--border-radius-pill);
+      background: var(--mobi-white);
+      color: var(--mobi-gray-600);
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .evt-filter-btn:hover {
+      border-color: var(--mobi-red);
+      color: var(--mobi-red);
+    }
+    .evt-filter-btn.active {
+      background: var(--mobi-red);
+      color: var(--mobi-white);
+      border-color: var(--mobi-red);
+    }
+
+    /* ── Event Cards ── */
+    .evt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: var(--space-xl);
+    }
+    .evt-card {
+      background: var(--mobi-white);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid rgba(0,0,0,.04);
+      cursor: pointer;
+      position: relative;
+    }
+    .evt-card:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 20px 50px rgba(218,35,35,.12), 0 8px 20px rgba(0,0,0,.08);
+    }
+    .evt-card__header {
+      position: relative;
+      height: 200px;
+      overflow: hidden;
+    }
+    .evt-card__gradient {
+      position: absolute;
+      inset: 0;
+      transition: all 0.5s ease;
+    }
+    .evt-card:hover .evt-card__gradient {
+      transform: scale(1.05);
+    }
+    .evt-card__type-badge {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      padding: 4px 12px;
+      border-radius: var(--border-radius-pill);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      z-index: 2;
+      backdrop-filter: blur(8px);
+    }
+    .evt-card__type-badge.kundenanlass {
+      background: rgba(218,35,35,.85);
+      color: #fff;
+    }
+    .evt-card__type-badge.networking {
+      background: rgba(37,99,235,.85);
+      color: #fff;
+    }
+    .evt-card__date-box {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: var(--mobi-white);
+      border-radius: 10px;
+      padding: 8px 14px;
+      text-align: center;
+      box-shadow: var(--shadow-md);
+      z-index: 2;
+    }
+    .evt-card__date-day {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--mobi-red);
+      line-height: 1;
+    }
+    .evt-card__date-month {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--mobi-gray-600);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .evt-card__header-icon {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      font-size: 3rem;
+      opacity: 0.15;
+      z-index: 1;
+      transition: all 0.5s ease;
+    }
+    .evt-card:hover .evt-card__header-icon {
+      opacity: 0.3;
+      transform: scale(1.15) rotate(-5deg);
+    }
+
+    .evt-card__body {
+      padding: var(--space-xl);
+    }
+    .evt-card__title {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--mobi-black);
+      margin-bottom: var(--space-sm);
+      transition: color var(--transition);
+    }
+    .evt-card:hover .evt-card__title {
+      color: var(--mobi-red);
+    }
+    .evt-card__desc {
+      font-size: 0.9rem;
+      color: var(--mobi-gray-600);
+      line-height: 1.6;
+      margin-bottom: var(--space-lg);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .evt-card__meta {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--mobi-gray-200);
+    }
+    .evt-card__meta-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: 13px;
+      color: var(--mobi-gray-600);
+    }
+    .evt-card__meta-icon {
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .evt-card__footer {
+      padding: 0 var(--space-xl) var(--space-xl);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-md);
+    }
+    .evt-card__capacity {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: 12px;
+      color: var(--mobi-gray-500);
+    }
+    .evt-card__capacity-bar {
+      width: 80px;
+      height: 4px;
+      background: var(--mobi-gray-200);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .evt-card__capacity-fill {
+      height: 100%;
+      background: var(--mobi-red);
+      border-radius: 2px;
+      transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ── Countdown Timer ── */
+    .evt-countdown {
+      display: flex;
+      gap: var(--space-md);
+      justify-content: center;
+      margin: var(--space-xl) 0;
+    }
+    .evt-countdown__unit {
+      text-align: center;
+    }
+    .evt-countdown__value {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--mobi-red);
+      background: var(--mobi-red-light);
+      border-radius: var(--border-radius);
+      padding: 8px 16px;
+      min-width: 64px;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+    .evt-countdown__value.tick {
+      animation: countTick 0.3s ease;
+    }
+    @keyframes countTick {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .evt-countdown__label {
+      font-size: 11px;
+      color: var(--mobi-gray-500);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
+    /* ── Event Detail Modal / Expanded View ── */
+    .evt-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9800;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .evt-modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .evt-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      z-index: 9801;
+      width: 90%;
+      max-width: 700px;
+      max-height: 85vh;
+      background: var(--mobi-white);
+      border-radius: 16px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.3);
+      overflow-y: auto;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .evt-modal.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .evt-modal__header {
+      position: relative;
+      padding: var(--space-2xl);
+      color: var(--mobi-white);
+      border-radius: 16px 16px 0 0;
+    }
+    .evt-modal__close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255,255,255,.15);
+      border: none;
+      color: var(--mobi-white);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .evt-modal__close:hover {
+      background: rgba(255,255,255,.3);
+      transform: rotate(90deg);
+    }
+    .evt-modal__body {
+      padding: var(--space-2xl);
+    }
+    .evt-modal__info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-md);
+      margin-bottom: var(--space-xl);
+    }
+    .evt-modal__info-item {
+      background: var(--mobi-gray-100);
+      border-radius: var(--border-radius);
+      padding: var(--space-md);
+    }
+    .evt-modal__info-item label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--mobi-gray-500);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .evt-modal__info-item span {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--mobi-black);
+    }
+
+    /* ── Next Event Spotlight ── */
+    .evt-spotlight {
+      background: var(--mobi-white);
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      border: 1px solid rgba(218,35,35,.08);
+    }
+    .evt-spotlight__inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 400px;
+    }
+    .evt-spotlight__visual {
+      position: relative;
+      background: linear-gradient(135deg, var(--mobi-red) 0%, #b91c1c 100%);
+      padding: var(--space-2xl);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: var(--mobi-white);
+      overflow: hidden;
+    }
+    .evt-spotlight__visual::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 70%, rgba(255,255,255,.1) 0%, transparent 60%);
+    }
+    .evt-spotlight__content {
+      padding: var(--space-2xl) var(--space-xl);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* ── Personalization Banner ── */
+    .evt-personalization {
+      background: linear-gradient(90deg, var(--mobi-red-light), rgba(254,242,242,.3));
+      border: 1px solid rgba(218,35,35,.1);
+      border-radius: var(--border-radius);
+      padding: var(--space-lg) var(--space-xl);
+      display: flex;
+      align-items: center;
+      gap: var(--space-lg);
+      margin-bottom: var(--space-2xl);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.5s ease;
+    }
+    .evt-personalization.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .evt-personalization__icon {
+      font-size: 2rem;
+      flex-shrink: 0;
+    }
+    .evt-personalization__text h4 {
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+    }
+    .evt-personalization__text p {
+      font-size: 0.85rem;
+      color: var(--mobi-gray-600);
+      margin: 0;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .evt-grid { grid-template-columns: 1fr; }
+      .evt-spotlight__inner { grid-template-columns: 1fr; }
+      .evt-hero__stats { flex-direction: column; gap: var(--space-md); }
+      .evt-countdown { gap: var(--space-sm); }
+      .evt-countdown__value { font-size: 1.5rem; min-width: 50px; padding: 6px 12px; }
+      .evt-modal { width: 95%; }
+      .evt-modal__info-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- DEMO Banner -->
+  <div class="demo-banner">Demo Zwecke – Keine offizielle Seite der Mobiliar</div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header__inner">
+      <a href="index.html" class="header__logo">
+        <img src="img/mobi-logo-color.svg" alt="die Mobiliar">
+      </a>
+      <nav class="header__nav">
+        <a href="index.html">Startseite</a>
+        <a href="praemienrechner.html">Versicherungen</a>
+        <a href="autoversicherung.html">Autoversicherung</a>
+        <a href="veranstaltungen.html" class="active">Veranstaltungen</a>
+        <a href="event.html">Zibelemärit</a>
+        <a href="#" class="btn btn--primary btn--sm">Kontakt</a>
+      </nav>
+      <div class="header__burger" aria-label="Navigation öffnen">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="evt-hero">
+    <div class="evt-hero__shape"></div>
+    <div class="evt-hero__shape"></div>
+    <div class="evt-hero__shape"></div>
+    <div class="evt-hero__content">
+      <div class="evt-hero__badge">
+        <span class="pulse-dot"></span>
+        Live aus Salesforce
+      </div>
+      <h1 class="evt-hero__title">Unsere Veranstaltungen</h1>
+      <p class="evt-hero__subtitle">
+        Erleben Sie die Mobiliar hautnah. Networking, Weiterbildung und exklusive Kundenanlässe – überall in der Schweiz.
+      </p>
+      <div class="evt-hero__stats">
+        <div class="evt-hero__stat">
+          <div class="evt-hero__stat-value" id="statEvents">5</div>
+          <div class="evt-hero__stat-label">Events</div>
+        </div>
+        <div class="evt-hero__stat">
+          <div class="evt-hero__stat-value" id="statCapacity">590</div>
+          <div class="evt-hero__stat-label">Plätze</div>
+        </div>
+        <div class="evt-hero__stat">
+          <div class="evt-hero__stat-value" id="statCities">4</div>
+          <div class="evt-hero__stat-label">Städte</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <div class="breadcrumb__inner">
+      <a href="index.html">Startseite</a>
+      <span>›</span>
+      <span>Veranstaltungen</span>
+    </div>
+  </div>
+
+  <!-- Personalization Banner (hidden by default, shown via Data Cloud) -->
+  <section class="section" style="padding-bottom: 0;">
+    <div class="section__inner">
+      <div class="evt-personalization" id="evtPersonalization">
+        <div class="evt-personalization__icon">✨</div>
+        <div class="evt-personalization__text">
+          <h4 id="persTitle">Willkommen zurück!</h4>
+          <p id="persSubtitle">Basierend auf Ihrem Interesse empfehlen wir Ihnen die folgenden Events.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Next Event Spotlight -->
+  <section class="section" id="naechster-event">
+    <div class="section__inner">
+      <h2 class="section__title">Nächster Event</h2>
+      <div class="evt-spotlight">
+        <div class="evt-spotlight__inner">
+          <div class="evt-spotlight__visual">
+            <div style="position: relative; z-index: 2;">
+              <p style="font-size: 13px; text-transform: uppercase; letter-spacing: 3px; opacity: .7; margin-bottom: 12px;">Kundenanlass</p>
+              <h2 style="color: #fff; font-size: clamp(1.5rem, 3vw, 2.2rem); margin-bottom: var(--space-lg);">Mobiliar Familientag</h2>
+              <div class="evt-countdown" id="spotlightCountdown">
+                <div class="evt-countdown__unit">
+                  <span class="evt-countdown__value" id="cdDays">--</span>
+                  <span class="evt-countdown__label">Tage</span>
+                </div>
+                <div class="evt-countdown__unit">
+                  <span class="evt-countdown__value" id="cdHours">--</span>
+                  <span class="evt-countdown__label">Stunden</span>
+                </div>
+                <div class="evt-countdown__unit">
+                  <span class="evt-countdown__value" id="cdMins">--</span>
+                  <span class="evt-countdown__label">Minuten</span>
+                </div>
+                <div class="evt-countdown__unit">
+                  <span class="evt-countdown__value" id="cdSecs">--</span>
+                  <span class="evt-countdown__label">Sekunden</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="evt-spotlight__content">
+            <div>
+              <h3 style="margin-bottom: var(--space-sm);">Mobiliar Familientag</h3>
+              <p style="color: var(--mobi-gray-600); margin-bottom: var(--space-lg); line-height: 1.6;">
+                Der Mobiliar Familientag lädt Familien zu einem unvergesslichen Tag im Verkehrshaus ein. Kinderprogramm, interaktive Stationen zum Thema Sicherheit und Prävention, Tombola mit tollen Preisen und gemeinsames Grillieren am See.
+              </p>
+              <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: var(--space-xl);">
+                <div class="evt-card__meta-row">
+                  <span class="evt-card__meta-icon">📅</span>
+                  <span>Samstag, 22. August 2026 – ab 10:00 Uhr</span>
+                </div>
+                <div class="evt-card__meta-row">
+                  <span class="evt-card__meta-icon">📍</span>
+                  <span>Luzern, Verkehrshaus der Schweiz</span>
+                </div>
+                <div class="evt-card__meta-row">
+                  <span class="evt-card__meta-icon">👥</span>
+                  <span>200 Plätze – Eintritt kostenlos</span>
+                </div>
+                <div class="evt-card__meta-row">
+                  <span class="evt-card__meta-icon">👔</span>
+                  <span>Dresscode: Casual</span>
+                </div>
+              </div>
+              <a href="#anmeldung" class="btn btn--primary btn--lg" data-event-id="a32J60000009PwGIAU" data-event-name="Mobiliar Familientag">
+                Jetzt anmelden
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- All Events -->
+  <section class="section section--gray" id="alle-events">
+    <div class="section__inner">
+      <h2 class="section__title">Alle Veranstaltungen 2026</h2>
+
+      <!-- Filters -->
+      <div class="evt-filters">
+        <button class="evt-filter-btn active" data-filter="all">Alle</button>
+        <button class="evt-filter-btn" data-filter="Kundenanlass">Kundenanlass</button>
+        <button class="evt-filter-btn" data-filter="Networking">Networking</button>
+      </div>
+
+      <!-- Event Grid -->
+      <div class="evt-grid" id="evtGrid">
+
+        <!-- EVT-00003: Mobiliar Familientag -->
+        <div class="evt-card" data-type="Kundenanlass" data-event-id="a32J60000009PwGIAU">
+          <div class="evt-card__header">
+            <div class="evt-card__gradient" style="background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%);"></div>
+            <span class="evt-card__type-badge kundenanlass">Kundenanlass</span>
+            <div class="evt-card__date-box">
+              <div class="evt-card__date-day">22</div>
+              <div class="evt-card__date-month">Aug</div>
+            </div>
+            <div class="evt-card__header-icon">👨‍👩‍👧‍👦</div>
+          </div>
+          <div class="evt-card__body">
+            <h3 class="evt-card__title">Mobiliar Familientag</h3>
+            <p class="evt-card__desc">Der Mobiliar Familientag lädt Familien zu einem unvergesslichen Tag im Verkehrshaus ein. Kinderprogramm, interaktive Stationen zum Thema Sicherheit und Prävention, Tombola mit tollen Preisen und gemeinsames Grillieren am See.</p>
+            <div class="evt-card__meta">
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">📍</span>
+                <span>Luzern, Verkehrshaus der Schweiz</span>
+              </div>
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">🕐</span>
+                <span>10:00 Uhr</span>
+              </div>
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">👔</span>
+                <span>Casual</span>
+              </div>
+            </div>
+          </div>
+          <div class="evt-card__footer">
+            <div class="evt-card__capacity">
+              <div class="evt-card__capacity-bar"><div class="evt-card__capacity-fill" style="width: 35%;"></div></div>
+              <span>200 Plätze</span>
+            </div>
+            <a href="#anmeldung" class="btn btn--primary btn--sm" data-event-name="Mobiliar Familientag">Anmelden</a>
+          </div>
+        </div>
+
+        <!-- EVT-00001: Mobiliar KMU Forum -->
+        <div class="evt-card" data-type="Kundenanlass" data-event-id="a32J60000009Pw6IAE">
+          <div class="evt-card__header">
+            <div class="evt-card__gradient" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);"></div>
+            <span class="evt-card__type-badge kundenanlass">Kundenanlass</span>
+            <div class="evt-card__date-box">
+              <div class="evt-card__date-day">18</div>
+              <div class="evt-card__date-month">Sep</div>
+            </div>
+            <div class="evt-card__header-icon">💼</div>
+          </div>
+          <div class="evt-card__body">
+            <h3 class="evt-card__title">Mobiliar KMU Forum</h3>
+            <p class="evt-card__desc">Das Mobiliar KMU Forum bringt Unternehmerinnen und Unternehmer zusammen. Keynotes von Branchenexperten und interaktive Workshops zu Cyberrisiken, Nachfolgeplanung und Versicherungsoptimierung.</p>
+            <div class="evt-card__meta">
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">📍</span>
+                <span>Zürich, GA Bahnhofstrasse</span>
+              </div>
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">🕐</span>
+                <span>17:30 Uhr</span>
+              </div>
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">👔</span>
+                <span>Smart Casual</span>
+              </div>
+            </div>
+          </div>
+          <div class="evt-card__footer">
+            <div class="evt-card__capacity">
+              <div class="evt-card__capacity-bar"><div class="evt-card__capacity-fill" style="width: 55%;"></div></div>
+              <span>60 Plätze</span>
+            </div>
+            <a href="#anmeldung" class="btn btn--primary btn--sm" data-event-name="Mobiliar KMU Forum">Anmelden</a>
+          </div>
+        </div>
+
+        <!-- EVT-00002: Nachhaltigkeits-Dialog -->
+        <div class="evt-card" data-type="Networking" data-event-id="a32J60000009PwBIAU">
+          <div class="evt-card__header">
+            <div class="evt-card__gradient" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #15803d 100%);"></div>
+            <span class="evt-card__type-badge networking">Networking</span>
+            <div class="evt-card__date-box">
+              <div class="evt-card__date-day">10</div>
+              <div class="evt-card__date-month">Okt</div>
+            </div>
+            <div class="evt-card__header-icon">🌿</div>
+          </div>
+          <div class="evt-card__body">
+            <h3 class="evt-card__title">Nachhaltigkeits-Dialog</h3>
+            <p class="evt-card__desc">Der Nachhaltigkeits-Dialog der Mobiliar beleuchtet wie Versicherungen und KMU gemeinsam nachhaltiger wirtschaften können. Panels zu klimaangepasstem Bauen, Prävention von Naturgefahren und grünen Versicherungslösungen.</p>
+            <div class="evt-card__meta">
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">📍</span>
+                <span>Bern, Mobiliar Arena Eventlokal</span>
+              </div>
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">🕐</span>
+                <span>16:00 Uhr</span>
+              </div>
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">👔</span>
+                <span>Smart Casual</span>
+              </div>
+            </div>
+          </div>
+          <div class="evt-card__footer">
+            <div class="evt-card__capacity">
+              <div class="evt-card__capacity-bar"><div class="evt-card__capacity-fill" style="width: 42%;"></div></div>
+              <span>100 Plätze</span>
+            </div>
+            <a href="#anmeldung" class="btn btn--primary btn--sm" data-event-name="Nachhaltigkeits-Dialog">Anmelden</a>
+          </div>
+        </div>
+
+        <!-- EVT-00004: Digital Innovation Night -->
+        <div class="evt-card" data-type="Networking" data-event-id="a32J60000009PwLIAU">
+          <div class="evt-card__header">
+            <div class="evt-card__gradient" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%);"></div>
+            <span class="evt-card__type-badge networking">Networking</span>
+            <div class="evt-card__date-box">
+              <div class="evt-card__date-day">05</div>
+              <div class="evt-card__date-month">Nov</div>
+            </div>
+            <div class="evt-card__header-icon">🤖</div>
+          </div>
+          <div class="evt-card__body">
+            <h3 class="evt-card__title">Digital Innovation Night</h3>
+            <p class="evt-card__desc">Die Digital Innovation Night der Mobiliar zeigt wie künstliche Intelligenz und digitale Technologien die Versicherungsbranche transformieren. Live-Demos von InsurTech-Startups, Hands-on AI-Workshops und ein exklusives Dinner.</p>
+            <div class="evt-card__meta">
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">📍</span>
+                <span>Basel, Messe Basel Halle 1</span>
+              </div>
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">🕐</span>
+                <span>18:00 Uhr</span>
+              </div>
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">👔</span>
+                <span>Business</span>
+              </div>
+            </div>
+          </div>
+          <div class="evt-card__footer">
+            <div class="evt-card__capacity">
+              <div class="evt-card__capacity-bar"><div class="evt-card__capacity-fill" style="width: 28%;"></div></div>
+              <span>150 Plätze</span>
+            </div>
+            <a href="#anmeldung" class="btn btn--primary btn--sm" data-event-name="Digital Innovation Night">Anmelden</a>
+          </div>
+        </div>
+
+        <!-- EVT-00000: Zibelemärit-Apéro -->
+        <div class="evt-card" data-type="Kundenanlass" data-event-id="a32J60000009PvwIAE">
+          <div class="evt-card__header">
+            <div class="evt-card__gradient" style="background: linear-gradient(135deg, var(--mobi-red) 0%, #b91c1c 50%, #991b1b 100%);"></div>
+            <span class="evt-card__type-badge kundenanlass">Kundenanlass</span>
+            <div class="evt-card__date-box">
+              <div class="evt-card__date-day">23</div>
+              <div class="evt-card__date-month">Nov</div>
+            </div>
+            <div class="evt-card__header-icon">🧅</div>
+          </div>
+          <div class="evt-card__body">
+            <h3 class="evt-card__title">Zibelemärit-Apéro</h3>
+            <p class="evt-card__desc">Exklusiver Apéro für unsere geschätzten Partner und Kunden am traditionellen Berner Zibelemärit. Networking, kulinarische Spezialitäten und Live-Musik in winterlicher Atmosphäre.</p>
+            <div class="evt-card__meta">
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">📍</span>
+                <span>Bern, Bundesplatz</span>
+              </div>
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">🕐</span>
+                <span>17:00 Uhr</span>
+              </div>
+              <div class="evt-card__meta-row">
+                <span class="evt-card__meta-icon">👔</span>
+                <span>Smart Casual</span>
+              </div>
+            </div>
+          </div>
+          <div class="evt-card__footer">
+            <div class="evt-card__capacity">
+              <div class="evt-card__capacity-bar"><div class="evt-card__capacity-fill" style="width: 60%;"></div></div>
+              <span>80 Plätze</span>
+            </div>
+            <a href="event.html" class="btn btn--primary btn--sm" data-event-name="Zibelemärit-Apéro">Details & Anmelden</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Registration Form -->
+  <section class="section" id="anmeldung">
+    <div class="section__inner">
+      <form class="calc-form" id="eventRegForm">
+        <h3>📝 Event-Anmeldung</h3>
+        <p style="font-size: 14px; color: var(--mobi-gray-600); margin-bottom: 24px;">
+          Melden Sie sich für eine unserer Veranstaltungen an. Wir freuen uns auf Sie!
+        </p>
+
+        <div class="form-group">
+          <label for="reg-event">Veranstaltung wählen</label>
+          <select id="reg-event" name="event" required>
+            <option value="">Bitte wählen</option>
+            <option value="a32J60000009PwGIAU">Mobiliar Familientag – 22. Aug 2026, Luzern</option>
+            <option value="a32J60000009Pw6IAE">KMU Forum – 18. Sep 2026, Zürich</option>
+            <option value="a32J60000009PwBIAU">Nachhaltigkeits-Dialog – 10. Okt 2026, Bern</option>
+            <option value="a32J60000009PwLIAU">Digital Innovation Night – 5. Nov 2026, Basel</option>
+            <option value="a32J60000009PvwIAE">Zibelemärit-Apéro – 23. Nov 2026, Bern</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="reg-vorname">Vorname</label>
+            <input type="text" id="reg-vorname" name="vorname" placeholder="Ihr Vorname" required>
+          </div>
+          <div class="form-group">
+            <label for="reg-nachname">Nachname</label>
+            <input type="text" id="reg-nachname" name="nachname" placeholder="Ihr Nachname" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-email">E-Mail-Adresse</label>
+          <input type="email" id="reg-email" name="email" placeholder="ihre.email@beispiel.ch" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="reg-telefon">Telefon (optional)</label>
+            <input type="tel" id="reg-telefon" name="telefon" placeholder="+41 79 123 45 67">
+          </div>
+          <div class="form-group">
+            <label for="reg-personen">Anzahl Personen</label>
+            <select id="reg-personen" name="personen" required>
+              <option value="1">1 Person</option>
+              <option value="2" selected>2 Personen</option>
+              <option value="3">3 Personen</option>
+              <option value="4">4 Personen</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-bemerkung">Bemerkungen (optional)</label>
+          <input type="text" id="reg-bemerkung" name="bemerkung" placeholder="z.B. vegetarisches Essen, Rollstuhl">
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--lg" style="width: 100%; justify-content: center;">
+          Anmeldung absenden
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section section--gray">
+    <div class="section__inner">
+      <div class="cta-banner">
+        <div>
+          <h2>Fragen zu unseren Events?</h2>
+          <p>Kontaktieren Sie uns – wir helfen Ihnen gerne bei der Anmeldung oder informieren Sie über kommende Anlässe.</p>
+        </div>
+        <a href="tel:0800808808" class="btn btn--white btn--lg">0800 808 808</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__col">
+        <h4>Versicherungen</h4>
+        <ul>
+          <li><a href="praemienrechner.html">Alle Versicherungen</a></li>
+          <li><a href="autoversicherung.html">Autoversicherung</a></li>
+          <li><a href="#">Hausratversicherung</a></li>
+          <li><a href="#">Rechtsschutzversicherung</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <h4>Vorsorge</h4>
+        <ul>
+          <li><a href="#">Unfallversicherung</a></li>
+          <li><a href="#">Sparversicherung</a></li>
+          <li><a href="#">Hypotheken</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <h4>Service</h4>
+        <ul>
+          <li><a href="#">Kontakt</a></li>
+          <li><a href="praemienrechner.html">Prämienrechner</a></li>
+          <li><a href="#">Schaden melden</a></li>
+          <li><a href="#">myMobiliar</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <h4>Unternehmen</h4>
+        <ul>
+          <li><a href="#">Über uns</a></li>
+          <li><a href="#">Karriere</a></li>
+          <li><a href="veranstaltungen.html">Veranstaltungen</a></li>
+          <li><a href="#">Medien</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <img src="img/mobi-logo.svg" alt="die Mobiliar" class="footer__logo" style="filter: brightness(0) invert(1);">
+      <span>© 2026 die Mobiliar – Demo</span>
+    </div>
+  </footer>
+
+  <!-- Cookie Banner -->
+  <div class="cookie-banner">
+    <div class="cookie-banner__inner">
+      <div class="cookie-banner__text">
+        <strong>Cookies & Datenschutz</strong>
+        Wir verwenden Cookies, um Ihnen ein optimales Erlebnis zu bieten.
+      </div>
+      <div class="cookie-banner__actions">
+        <button class="btn btn--primary btn--sm" data-consent="accept">Akzeptieren</button>
+        <button class="btn btn--outline btn--sm" data-consent="reject">Ablehnen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event Detail Modal -->
+  <div class="evt-modal-overlay" id="evtModalOverlay"></div>
+  <div class="evt-modal" id="evtModal">
+    <div class="evt-modal__header" id="evtModalHeader">
+      <button class="evt-modal__close" id="evtModalClose">&times;</button>
+      <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 2px; opacity: .7; margin-bottom: 8px;" id="modalType"></p>
+      <h2 style="color: #fff; margin-bottom: 8px;" id="modalTitle"></h2>
+    </div>
+    <div class="evt-modal__body">
+      <div class="evt-modal__info-grid">
+        <div class="evt-modal__info-item">
+          <label>Datum</label>
+          <span id="modalDate"></span>
+        </div>
+        <div class="evt-modal__info-item">
+          <label>Uhrzeit</label>
+          <span id="modalTime"></span>
+        </div>
+        <div class="evt-modal__info-item">
+          <label>Ort</label>
+          <span id="modalLocation"></span>
+        </div>
+        <div class="evt-modal__info-item">
+          <label>Dresscode</label>
+          <span id="modalDress"></span>
+        </div>
+        <div class="evt-modal__info-item">
+          <label>Kapazität</label>
+          <span id="modalCapacity"></span>
+        </div>
+        <div class="evt-modal__info-item">
+          <label>Catering</label>
+          <span id="modalCatering"></span>
+        </div>
+      </div>
+      <h4 style="margin-bottom: var(--space-sm);">Über diesen Event</h4>
+      <p style="color: var(--mobi-gray-600); line-height: 1.7; margin-bottom: var(--space-xl);" id="modalDesc"></p>
+      <a href="#anmeldung" class="btn btn--primary btn--lg" style="width: 100%; justify-content: center;" id="modalRegBtn">
+        Jetzt anmelden
+      </a>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/tracking.js"></script>
+  <script src="js/demo-personas.js"></script>
+  <script src="js/dt360-panel.js"></script>
+
+  <!-- Veranstaltungen Page JS -->
+  <script>
+  (function() {
+    'use strict';
+
+    // ═══ EVENT DATA (from Salesforce) ═══
+    var EVENTS = [
+      {
+        id: 'a32J60000009PwGIAU',
+        name: 'Mobiliar Familientag',
+        date: '2026-08-22T10:00:00Z',
+        location: 'Luzern, Verkehrshaus der Schweiz',
+        description: 'Der Mobiliar Familientag lädt Familien zu einem unvergesslichen Tag im Verkehrshaus ein. Kinderprogramm, interaktive Stationen zum Thema Sicherheit und Prävention, Tombola mit tollen Preisen und gemeinsames Grillieren am See. Für die ganze Familie kostenlos.',
+        capacity: 200,
+        type: 'Kundenanlass',
+        dressCode: 'Casual',
+        catering: 'Grillbuffet, Kindermenu, Glacewagen, vegetarische und vegane Optionen',
+        gradient: 'linear-gradient(135deg, #f97316, #c2410c)'
+      },
+      {
+        id: 'a32J60000009Pw6IAE',
+        name: 'Mobiliar KMU Forum',
+        date: '2026-09-18T17:30:00Z',
+        location: 'Zürich, GA Bahnhofstrasse',
+        description: 'Das Mobiliar KMU Forum bringt Unternehmerinnen und Unternehmer zusammen. Keynotes von Branchenexperten und interaktive Workshops zu Cyberrisiken, Nachfolgeplanung und Versicherungsoptimierung. Networking-Apéro mit regionalen Spezialitäten inklusive.',
+        capacity: 60,
+        type: 'Kundenanlass',
+        dressCode: 'Smart Casual',
+        catering: 'Apéro riche mit regionalen Produkten',
+        gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)'
+      },
+      {
+        id: 'a32J60000009PwBIAU',
+        name: 'Nachhaltigkeits-Dialog',
+        date: '2026-10-10T16:00:00Z',
+        location: 'Bern, Mobiliar Arena Eventlokal',
+        description: 'Der Nachhaltigkeits-Dialog der Mobiliar beleuchtet wie Versicherungen und KMU gemeinsam nachhaltiger wirtschaften können. Panels zu klimaangepasstem Bauen, Prävention von Naturgefahren und grünen Versicherungslösungen. Mit prominenten Referenten aus Wirtschaft und Wissenschaft.',
+        capacity: 100,
+        type: 'Networking',
+        dressCode: 'Smart Casual',
+        catering: 'Bio-Catering mit saisonalen Zutaten aus der Region',
+        gradient: 'linear-gradient(135deg, #22c55e, #15803d)'
+      },
+      {
+        id: 'a32J60000009PwLIAU',
+        name: 'Digital Innovation Night',
+        date: '2026-11-05T18:00:00Z',
+        location: 'Basel, Messe Basel Halle 1',
+        description: 'Die Digital Innovation Night der Mobiliar zeigt wie künstliche Intelligenz und digitale Technologien die Versicherungsbranche transformieren. Live-Demos von InsurTech-Startups, Hands-on AI-Workshops und ein exklusives Dinner mit Innovationstreibern der Schweizer Wirtschaft.',
+        capacity: 150,
+        type: 'Networking',
+        dressCode: 'Business',
+        catering: 'Stehdinner mit Live-Cooking-Stationen',
+        gradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)'
+      },
+      {
+        id: 'a32J60000009PvwIAE',
+        name: 'Zibelemärit-Apéro',
+        date: '2026-11-23T17:00:00Z',
+        location: 'Bern, Bundesplatz',
+        description: 'Exklusiver Apéro für unsere geschätzten Partner und Kunden am traditionellen Berner Zibelemärit. Networking, kulinarische Spezialitäten und Live-Musik in winterlicher Atmosphäre.',
+        capacity: 80,
+        type: 'Kundenanlass',
+        dressCode: 'Smart Casual',
+        catering: 'Berner Platte, Zibelechuche, Glühwein, alkoholfreie Optionen',
+        gradient: 'linear-gradient(135deg, #da2323, #991b1b)'
+      }
+    ];
+
+    // ═══ COUNTDOWN TIMER ═══
+    function updateCountdown() {
+      var nextEvent = new Date('2026-08-22T10:00:00+02:00');
+      var now = new Date();
+      var diff = nextEvent - now;
+      if (diff <= 0) { diff = 0; }
+
+      var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      var mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      var secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+      var dEl = document.getElementById('cdDays');
+      var hEl = document.getElementById('cdHours');
+      var mEl = document.getElementById('cdMins');
+      var sEl = document.getElementById('cdSecs');
+
+      if (dEl) {
+        var newDays = String(days);
+        if (dEl.textContent !== newDays) { dEl.textContent = newDays; }
+      }
+      if (hEl) {
+        var newHours = String(hours).padStart(2, '0');
+        if (hEl.textContent !== newHours) { hEl.textContent = newHours; }
+      }
+      if (mEl) {
+        var newMins = String(mins).padStart(2, '0');
+        if (mEl.textContent !== newMins) { mEl.textContent = newMins; }
+      }
+      if (sEl) {
+        var newSecs = String(secs).padStart(2, '0');
+        if (sEl.textContent !== newSecs) {
+          sEl.textContent = newSecs;
+          sEl.classList.add('tick');
+          setTimeout(function() { sEl.classList.remove('tick'); }, 300);
+        }
+      }
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    // ═══ CARD REVEAL ANIMATION ═══
+    var cardObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          cardObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+
+    document.querySelectorAll('.evt-card').forEach(function(card) {
+      cardObserver.observe(card);
+    });
+
+    // ═══ FILTER TABS ═══
+    document.querySelectorAll('.evt-filter-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.evt-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+
+        var filter = btn.dataset.filter;
+        document.querySelectorAll('.evt-card').forEach(function(card) {
+          if (filter === 'all' || card.dataset.type === filter) {
+            card.style.display = '';
+            // Re-trigger animation
+            card.classList.remove('visible');
+            setTimeout(function() { card.classList.add('visible'); }, 50);
+          } else {
+            card.style.display = 'none';
+          }
+        });
+
+        // Track filter click
+        if (window.__trackEvent) window.__trackEvent('Event Filter Click', { filter: filter });
+      });
+    });
+
+    // ═══ EVENT DETAIL MODAL ═══
+    var overlay = document.getElementById('evtModalOverlay');
+    var modal = document.getElementById('evtModal');
+    var closeBtn = document.getElementById('evtModalClose');
+
+    var months = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+    var weekdays = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+
+    function openModal(eventId) {
+      var evt = EVENTS.find(function(e) { return e.id === eventId; });
+      if (!evt) return;
+
+      var d = new Date(evt.date);
+      document.getElementById('modalType').textContent = evt.type;
+      document.getElementById('modalTitle').textContent = evt.name;
+      document.getElementById('evtModalHeader').style.background = evt.gradient;
+      document.getElementById('modalDate').textContent = weekdays[d.getDay()] + ', ' + d.getDate() + '. ' + months[d.getMonth()] + ' ' + d.getFullYear();
+      document.getElementById('modalTime').textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ' Uhr';
+      document.getElementById('modalLocation').textContent = evt.location;
+      document.getElementById('modalDress').textContent = evt.dressCode;
+      document.getElementById('modalCapacity').textContent = evt.capacity + ' Plätze';
+      document.getElementById('modalCatering').textContent = evt.catering;
+      document.getElementById('modalDesc').textContent = evt.description;
+
+      // Pre-select event in form
+      var regSelect = document.getElementById('reg-event');
+      if (regSelect) {
+        var options = regSelect.querySelectorAll('option');
+        options.forEach(function(opt) {
+          if (opt.value === eventId) regSelect.value = eventId;
+        });
+      }
+
+      overlay.classList.add('active');
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+
+      // Track
+      if (window.__trackEvent) window.__trackEvent('Event Detail View', { eventName: evt.name, eventId: evt.id });
+    }
+
+    function closeModal() {
+      overlay.classList.remove('active');
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    if (overlay) overlay.addEventListener('click', closeModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    document.getElementById('modalRegBtn').addEventListener('click', closeModal);
+
+    // Click on card opens modal
+    document.querySelectorAll('.evt-card').forEach(function(card) {
+      card.addEventListener('click', function(e) {
+        // Don't open modal if clicking "Anmelden" button
+        if (e.target.closest('a.btn')) return;
+        var eventId = card.dataset.eventId;
+        if (eventId) openModal(eventId);
+      });
+    });
+
+    // ESC to close
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // ═══ ANMELDEN BUTTONS → pre-select event ═══
+    document.querySelectorAll('[data-event-name]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var eventId = btn.dataset.eventId || btn.closest('.evt-card')?.dataset?.eventId;
+        if (eventId) {
+          var regSelect = document.getElementById('reg-event');
+          if (regSelect) regSelect.value = eventId;
+        }
+      });
+    });
+
+    // ═══ HERO STAT COUNTER ANIMATION ═══
+    function animateCounter(el, target) {
+      var current = 0;
+      var step = Math.ceil(target / 40);
+      var interval = setInterval(function() {
+        current += step;
+        if (current >= target) {
+          current = target;
+          clearInterval(interval);
+        }
+        el.textContent = current;
+      }, 30);
+    }
+
+    // Animate stats on hero visible
+    var heroObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          animateCounter(document.getElementById('statEvents'), 5);
+          animateCounter(document.getElementById('statCapacity'), 590);
+          animateCounter(document.getElementById('statCities'), 4);
+          heroObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    var heroEl = document.querySelector('.evt-hero');
+    if (heroEl) heroObserver.observe(heroEl);
+
+    // ═══ PERSONALIZATION via Data Cloud ═══
+    setTimeout(function() {
+      var persBox = document.getElementById('evtPersonalization');
+      if (persBox) persBox.classList.add('visible');
+    }, 1500);
+
+  })();
+  </script>
+
+</body>
+</html>
