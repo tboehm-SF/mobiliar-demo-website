@@ -145,11 +145,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Cache form state on every input/change event — use form-level delegation
-    form.addEventListener('input', () => {
+    console.log('[Mobiliar] Attaching form cache listeners to', form.id || 'calc-form');
+    form.addEventListener('input', (e) => {
+      console.log('[Mobiliar] Form input event from', e.target.name || e.target.id);
       formTouched = true;
       cacheFormState(form);
     });
-    form.addEventListener('change', () => {
+    form.addEventListener('change', (e) => {
+      console.log('[Mobiliar] Form change event from', e.target.name || e.target.id);
       formTouched = true;
       cacheFormState(form);
     });
