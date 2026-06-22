@@ -15,6 +15,7 @@
   var consentState = { status: 'Ausstehend', timestamp: null };
   var emailState = { sent: false, to: '', subject: '', template: '', timestamp: null };
   var sdkState = { loaded: false, sitemapReady: false, anonymousId: '—' };
+  var journeyState = { formStarted: false, formPage: '', formId: '', formFields: {}, formSubmitted: false, abandoned: false };
 
   // --- Inject Styles ---
   var style = document.createElement('style');
@@ -91,6 +92,19 @@
     '.dt360-evt.email{background:rgba(218,35,35,.08);border-color:rgba(218,35,35,.15)}',
     '.dt360-email-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;',
     'font-size:10px;font-weight:700;letter-spacing:.5px;background:rgba(218,35,35,.12);color:#da2323;border:1px solid rgba(218,35,35,.2)}',
+
+    /* Journey badges */
+    '.dt360-journey-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;',
+    'font-size:10px;font-weight:700;letter-spacing:.5px}',
+    '.dt360-journey-badge.active{background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.2)}',
+    '.dt360-journey-badge.abandoned{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.2);',
+    'animation:dt360flash .6s ease}',
+    '.dt360-journey-badge.completed{background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.2)}',
+    '.dt360-journey-badge.idle{background:rgba(161,161,170,.12);color:#a1a1aa;border:1px solid rgba(161,161,170,.2)}',
+    '.dt360-journey-progress{display:flex;gap:4px;margin-top:6px}',
+    '.dt360-journey-step{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.08)}',
+    '.dt360-journey-step.done{background:#3b82f6}',
+    '.dt360-journey-step.fail{background:#ef4444}',
 
     /* Empty state */
     '.dt360-empty{text-align:center;padding:16px 0;color:#52525b;font-size:11px;font-style:italic}',
@@ -194,6 +208,9 @@
         row('Template', emailState.template),
         row('Zeitpunkt', emailState.timestamp),
       ]) : '',
+
+      // --- Journey Signal ---
+      renderSection('Journey Signal', '🚦', renderJourneyContent()),
 
       // --- Event Log ---
       renderSection('Ereignis-Log (' + events.length + ')', '📡',
@@ -373,6 +390,123 @@
     if (isOpen) refreshPanel();
   }
 
+  // --- Journey Signal renderer ---
+  function renderJourneyContent() {
+    // Check if there's a cached form from sessionStorage
+    var cache = null;
+    try {
+      var cacheStr = sessionStorage.getItem('mobi-form-cache');
+      if (cacheStr) cache = JSON.parse(cacheStr);
+    } catch(e) {}
+
+    // If no journey activity
+    if (!journeyState.formStarted && !cache) {
+      return [
+        row('Status', '<span class="dt360-journey-badge idle">— Kein Formular</span>'),
+        row('Hinweis', '<span style="color:#71717a;font-size:10px">Starten Sie den Prämienrechner, um Journey-Signale zu sehen</span>')
+      ];
+    }
+
+    var rows = [];
+
+    // Journey status badge
+    if (journeyState.formSubmitted) {
+      rows.push(row('Status', '<span class="dt360-journey-badge completed">✓ ABGESCHLOSSEN</span>'));
+    } else if (journeyState.abandoned) {
+      rows.push(row('Status', '<span class="dt360-journey-badge abandoned">🚨 ABBRUCH ERKANNT</span>'));
+    } else if (journeyState.formStarted || cache) {
+      rows.push(row('Status', '<span class="dt360-journey-badge active">▶ Formular begonnen</span>'));
+    }
+
+    // Page where form is being filled
+    var page = journeyState.formPage || (cache && cache.page) || '';
+    if (page) {
+      var pageLabels = {
+        'autoversicherung.html': 'Autoversicherung',
+        'praemienrechner.html': 'Prämienrechner',
+        'event.html': 'Event-Anmeldung',
+        'veranstaltungen.html': 'Veranstaltungen'
+      };
+      rows.push(row('Formular', pageLabels[page] || page));
+    }
+
+    // Cached form fields
+    var fields = (cache && cache.fields) || journeyState.formFields || {};
+    var fieldCount = Object.keys(fields).length;
+    if (fieldCount > 0) {
+      rows.push(row('Felder ausgefüllt', '<span style="color:#3b82f6;font-weight:600">' + fieldCount + '</span>'));
+
+      // Show key product interest fields
+      if (fields.deckung) {
+        var deckungLabels = { 'haftpflicht': 'Haftpflicht', 'teilkasko': 'Teilkasko', 'vollkasko': 'Vollkasko' };
+        rows.push(row('Deckung', '<span style="color:#f59e0b">' + (deckungLabels[fields.deckung] || fields.deckung) + '</span>'));
+      }
+      if (fields.marke) rows.push(row('Fahrzeug', fields.marke));
+      if (fields.baujahr) rows.push(row('Baujahr', fields.baujahr));
+    }
+
+    // Progress bar: Login → Form Start → Fields → Submit
+    var step1 = identityState.status === 'known' ? 'done' : '';
+    var step2 = (journeyState.formStarted || cache) ? 'done' : '';
+    var step3 = fieldCount > 2 ? 'done' : '';
+    var step4 = journeyState.formSubmitted ? 'done' : (journeyState.abandoned ? 'fail' : '');
+
+    rows.push('<div class="dt360-journey-progress">' +
+      '<div class="dt360-journey-step ' + step1 + '" title="Login"></div>' +
+      '<div class="dt360-journey-step ' + step2 + '" title="Formular gestartet"></div>' +
+      '<div class="dt360-journey-step ' + step3 + '" title="Felder ausgefüllt"></div>' +
+      '<div class="dt360-journey-step ' + step4 + '" title="Absenden"></div>' +
+    '</div>');
+
+    // Legend below progress
+    rows.push('<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:8px;color:#52525b">' +
+      '<span>Login</span><span>Start</span><span>Felder</span><span>Absenden</span></div>');
+
+    return rows;
+  }
+
+  // --- Listen for journey events from main.js ---
+  window.addEventListener('mobi-form-start', function(e) {
+    journeyState.formStarted = true;
+    journeyState.formPage = (e.detail && e.detail.page) || '';
+    journeyState.formId = (e.detail && e.detail.formId) || '';
+    journeyState.formSubmitted = false;
+    journeyState.abandoned = false;
+    if (isOpen) refreshPanel();
+  });
+
+  window.addEventListener('mobi-form-submit', function(e) {
+    journeyState.formSubmitted = true;
+    journeyState.abandoned = false;
+    if (isOpen) refreshPanel();
+  });
+
+  // Listen for login/logout to update identity without needing form submit
+  window.addEventListener('mobi-login', function(e) {
+    if (e.detail) {
+      identityState.status = 'known';
+      identityState.email = e.detail.email || '';
+      identityState.firstName = e.detail.vorname || '';
+      identityState.lastName = e.detail.nachname || '';
+      formSubmitted = true; // Allow identity display from login too
+      flashIdentityBadge();
+    }
+    if (isOpen) refreshPanel();
+  });
+
+  window.addEventListener('mobi-logout', function() {
+    identityState.status = 'anonymous';
+    identityState.email = '';
+    identityState.firstName = '';
+    identityState.lastName = '';
+    if (isOpen) refreshPanel();
+  });
+
+  // Periodically refresh journey section if form cache changes
+  setInterval(function() {
+    if (isOpen && journeyState.formStarted) refreshPanel();
+  }, 2000);
+
   function flashIdentityBadge() {
     setTimeout(function() {
       var b = document.querySelector('.dt360-id-badge');
@@ -447,6 +581,35 @@
       togglePanel();
     }
   });
+
+  // --- Restore login state from sessionStorage (user may have logged in before panel loaded) ---
+  var savedLogin = sessionStorage.getItem('mobi-login');
+  if (savedLogin) {
+    try {
+      var loginUser = JSON.parse(savedLogin);
+      if (loginUser.email) {
+        identityState.status = 'known';
+        identityState.email = loginUser.email;
+        identityState.firstName = loginUser.vorname || '';
+        identityState.lastName = loginUser.nachname || '';
+        formSubmitted = true; // Gate identity display
+      }
+    } catch(e) {}
+  }
+
+  // --- Restore form cache state ---
+  var savedCache = sessionStorage.getItem('mobi-form-cache');
+  if (savedCache) {
+    try {
+      var cacheData = JSON.parse(savedCache);
+      if (cacheData.formTouched) {
+        journeyState.formStarted = true;
+        journeyState.formPage = cacheData.page || '';
+        journeyState.formId = cacheData.formId || '';
+        journeyState.formFields = cacheData.fields || {};
+      }
+    } catch(e) {}
+  }
 
   console.log('[DT360] RT DT360 Tracking Validator loaded — click badge or Ctrl+Shift+D');
 

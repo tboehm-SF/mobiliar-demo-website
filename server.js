@@ -251,6 +251,139 @@ app.post('/api/register-event', async (req, res) => {
   }
 });
 
+// ============================================================
+// POST /api/create-lead — Journey Abandonment Lead Creation
+// Called via navigator.sendBeacon when a logged-in user abandons
+// a partially filled form (e.g. Prämienrechner / Autoversicherung).
+// Creates a Lead in Salesforce CRM with product interest context.
+// ============================================================
+app.post('/api/create-lead', async (req, res) => {
+  const { email, firstName, lastName, product, source, page, formFields } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: 'email required' });
+  }
+
+  console.log(`[Lead] Abandonment Lead request: ${email} — ${product} (${page})`);
+
+  const sfInstanceUrl = process.env.SF_INSTANCE_URL;
+  const sfAccessToken = process.env.SF_ACCESS_TOKEN;
+
+  if (!sfInstanceUrl || !sfAccessToken) {
+    console.warn('[Lead] SF credentials not configured — simulating Lead creation');
+    return res.json({
+      success: true,
+      message: 'Lead creation simulated (SF credentials not configured)',
+      simulated: true,
+      email: email,
+      product: product,
+      source: source
+    });
+  }
+
+  const apiBase = `${sfInstanceUrl}/services/data/v62.0`;
+  const headers = {
+    'Authorization': `Bearer ${sfAccessToken}`,
+    'Content-Type': 'application/json'
+  };
+
+  try {
+    // Check if Lead already exists for this email
+    const searchQuery = encodeURIComponent(
+      `SELECT Id, Description FROM Lead WHERE Email = '${email.replace(/'/g, "\\'")}' AND IsConverted = false LIMIT 1`
+    );
+    const searchResp = await fetch(`${apiBase}/query/?q=${searchQuery}`, { headers });
+    const searchData = await searchResp.json();
+
+    // Build description with abandonment context
+    const abandonNote = [
+      `Journey-Abbruch: ${product || 'Versicherung'}`,
+      `Seite: ${page || 'unbekannt'}`,
+      `Zeitpunkt: ${new Date().toLocaleString('de-CH')}`,
+      formFields?.marke ? `Fahrzeug: ${formFields.marke}` : '',
+      formFields?.baujahr ? `Baujahr: ${formFields.baujahr}` : '',
+      formFields?.deckung ? `Deckung: ${formFields.deckung}` : '',
+      formFields?.km ? `km/Jahr: ${formFields.km}` : '',
+      formFields?.plz ? `PLZ: ${formFields.plz}` : '',
+    ].filter(Boolean).join('\n');
+
+    let leadId;
+
+    if (searchData.totalSize > 0) {
+      // Update existing Lead with abandonment note
+      leadId = searchData.records[0].Id;
+      const existingDesc = searchData.records[0].Description || '';
+      const newDesc = existingDesc
+        ? `${existingDesc}\n\n--- ${abandonNote}`
+        : abandonNote;
+
+      const updatePayload = {
+        Description: newDesc,
+        LeadSource: 'Web'
+      };
+
+      // Set product interest if field exists
+      try {
+        updatePayload['SDO_Sales_Product_Interest__c'] = product || 'Versicherung';
+      } catch(e) {}
+
+      try {
+        updatePayload['Lead_Source_Detail__c'] = source || 'Journey Abandonment';
+      } catch(e) {}
+
+      await fetch(`${apiBase}/sobjects/Lead/${leadId}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(updatePayload)
+      });
+      console.log(`[Lead] Updated existing Lead ${leadId} with abandonment context`);
+
+    } else {
+      // Create new Lead
+      const leadPayload = {
+        FirstName: firstName || '',
+        LastName: lastName || email.split('@')[0],
+        Email: email,
+        Company: '[Prämienrechner-Abbruch]',
+        LeadSource: 'Web',
+        Description: abandonNote,
+        Country: 'Switzerland'
+      };
+
+      // Set custom fields if they exist on org
+      try { leadPayload['SDO_Sales_Product_Interest__c'] = product || 'Versicherung'; } catch(e) {}
+      try { leadPayload['Lead_Source_Detail__c'] = source || 'Journey Abandonment'; } catch(e) {}
+
+      const createResp = await fetch(`${apiBase}/sobjects/Lead`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(leadPayload)
+      });
+      const createData = await createResp.json();
+
+      if (createData.success) {
+        leadId = createData.id;
+        console.log(`[Lead] Created abandonment Lead ${leadId} for ${email}`);
+      } else {
+        console.error('[Lead] Failed to create Lead:', createData);
+        return res.status(500).json({ error: 'Failed to create Lead', details: createData });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Abandonment Lead ${searchData.totalSize > 0 ? 'updated' : 'created'} for ${email}`,
+      leadId: leadId,
+      product: product,
+      source: source
+    });
+
+  } catch (err) {
+    console.error('[Lead] Error:', err.message);
+    res.status(500).json({ error: 'Lead creation failed', message: err.message });
+  }
+});
+
 // Fallback to index.html for clean URLs
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));

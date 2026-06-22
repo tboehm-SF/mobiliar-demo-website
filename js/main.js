@@ -81,17 +81,70 @@ document.addEventListener('DOMContentLoaded', () => {
     observer.observe(el);
   });
 
-  /* --- Form Interaction Tracking (placeholder for SDK) --- */
+  /* --- Form Data Caching & Abandonment Detection --- */
+  // Tracks partial form input in sessionStorage so abandonment can capture
+  // what product/coverage the user was interested in.
+  const FORM_CACHE_KEY = 'mobi-form-cache';
+  let formTouched = false;
+  let formSubmitted = false;
+
+  function cacheFormState(form) {
+    const fd = new FormData(form);
+    const fields = {};
+    fd.forEach((v, k) => { if (v) fields[k] = v; });
+    const cache = {
+      page: currentPage,
+      formId: form.id || 'calc-form',
+      timestamp: new Date().toISOString(),
+      fields: fields,
+      formTouched: true
+    };
+    sessionStorage.setItem(FORM_CACHE_KEY, JSON.stringify(cache));
+    // Expose for DT360 panel and tracking.js
+    window.__formCache = cache;
+  }
+
+  function clearFormCache() {
+    sessionStorage.removeItem(FORM_CACHE_KEY);
+    window.__formCache = null;
+    formTouched = false;
+    formSubmitted = true;
+  }
+
+  // Restore flag from any existing cache (e.g. user navigated back)
+  const existingCache = sessionStorage.getItem(FORM_CACHE_KEY);
+  if (existingCache) {
+    try {
+      window.__formCache = JSON.parse(existingCache);
+      formTouched = true;
+    } catch(e) { /* ignore */ }
+  }
+
   document.querySelectorAll('.calc-form').forEach(form => {
     let interactionStarted = false;
 
+    // Cache form state on every input/change event
     form.querySelectorAll('input, select').forEach(input => {
       input.addEventListener('focus', () => {
         if (!interactionStarted) {
           interactionStarted = true;
+          formTouched = true;
           // SDK hook: CalculatorStart event
           if (window.__trackEvent) window.__trackEvent('CalculatorStart', { page: currentPage });
+          // Dispatch for DT360 panel
+          window.dispatchEvent(new CustomEvent('mobi-form-start', {
+            detail: { page: currentPage, formId: form.id }
+          }));
         }
+      });
+
+      input.addEventListener('input', () => {
+        formTouched = true;
+        cacheFormState(form);
+      });
+      input.addEventListener('change', () => {
+        formTouched = true;
+        cacheFormState(form);
       });
     });
 
@@ -104,6 +157,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // SDK hook: FormSubmit event
       if (window.__trackEvent) window.__trackEvent('FormSubmit', values);
+
+      // Clear the form cache — successful submit means no abandonment
+      clearFormCache();
+
+      // Dispatch for DT360 panel
+      window.dispatchEvent(new CustomEvent('mobi-form-submit', {
+        detail: { page: currentPage, formId: form.id, values: values }
+      }));
 
       // Show success toast
       showToast('Vielen Dank! Wir kontaktieren Sie in Kürze.');
@@ -137,6 +198,56 @@ document.addEventListener('DOMContentLoaded', () => {
       // Reset after delay
       setTimeout(() => form.reset(), 2000);
     });
+  });
+
+  // --- Abandonment Detection ---
+  // When user navigates away with a touched but un-submitted form,
+  // fire a JourneyAbandonment event and optionally create a Lead.
+  window.addEventListener('beforeunload', () => {
+    if (!formTouched || formSubmitted) return;
+
+    const cache = sessionStorage.getItem(FORM_CACHE_KEY);
+    if (!cache) return;
+
+    let parsed;
+    try { parsed = JSON.parse(cache); } catch(e) { return; }
+
+    // Check if user is logged in (known identity)
+    const loginData = sessionStorage.getItem('mobi-login');
+
+    // Fire SDK abandonment event (sendBeacon for reliability)
+    if (window.__trackEvent) {
+      window.__trackEvent('JourneyAbandonment', {
+        page: parsed.page || currentPage,
+        formId: parsed.formId || '',
+        fieldsEntered: Object.keys(parsed.fields || {}).join(','),
+        product: parsed.fields?.deckung || parsed.fields?.marke || 'Unbekannt',
+        userKnown: !!loginData
+      });
+    }
+
+    // If user is known (logged in), trigger server-side Lead creation via sendBeacon
+    if (loginData) {
+      try {
+        const user = JSON.parse(loginData);
+        const leadPayload = {
+          email: user.email,
+          firstName: user.vorname || '',
+          lastName: user.nachname || '',
+          product: parsed.fields?.deckung ? 'Autoversicherung – ' + parsed.fields.deckung : 'Versicherung',
+          source: 'Journey Abandonment',
+          page: parsed.page || currentPage,
+          formFields: parsed.fields || {}
+        };
+        navigator.sendBeacon(
+          '/api/create-lead',
+          new Blob([JSON.stringify(leadPayload)], { type: 'application/json' })
+        );
+        console.log('[Mobiliar] Abandonment Lead beacon sent:', leadPayload);
+      } catch(e) {
+        console.warn('[Mobiliar] Abandonment Lead failed:', e);
+      }
+    }
   });
 
   /* --- Toast Helper --- */

@@ -508,26 +508,93 @@ SalesforceInteractions.init({
         }
     }
 
-    // ─── FORM ABANDONMENT TRACKING ───────────────────────
+    // ─── FORM ABANDONMENT TRACKING (Enhanced) ──────────────
+    // Fires a rich JourneyAbandonment event when user leaves with
+    // partially filled form data. Reads from sessionStorage cache
+    // set by main.js for field-level detail.
     window.addEventListener('beforeunload', function () {
-        var forms = document.querySelectorAll('form.calc-form');
-        forms.forEach(function (form) {
-            if (form.dataset.submitted) return;
-            var hasInput = false;
-            form.querySelectorAll('input, select').forEach(function (input) {
-                if (input.value && input.value.trim() !== '' && input.type !== 'hidden' && input.type !== 'submit') {
-                    hasInput = true;
-                }
-            });
-            if (hasInput) {
-                SalesforceInteractions.sendEvent({
-                    interaction: {
-                        name: 'Form Abandon',
-                        eventType: 'websiteEngagement'
+        // Read cached form state from main.js
+        var cacheStr = sessionStorage.getItem('mobi-form-cache');
+        if (!cacheStr) {
+            // Fallback: check DOM for filled forms
+            var forms = document.querySelectorAll('form.calc-form');
+            forms.forEach(function (form) {
+                if (form.dataset.submitted) return;
+                var hasInput = false;
+                form.querySelectorAll('input, select').forEach(function (input) {
+                    if (input.value && input.value.trim() !== '' && input.type !== 'hidden' && input.type !== 'submit') {
+                        hasInput = true;
                     }
                 });
+                if (hasInput) {
+                    SalesforceInteractions.sendEvent({
+                        interaction: {
+                            name: 'Form Abandon',
+                            eventType: 'websiteEngagement'
+                        }
+                    });
+                }
+            });
+            return;
+        }
+
+        // Rich abandonment with cached field data
+        var cache;
+        try { cache = JSON.parse(cacheStr); } catch(e) { return; }
+        if (!cache || !cache.formTouched) return;
+
+        // Check if user is known (logged in)
+        var loginStr = sessionStorage.getItem('mobi-login');
+        var isKnown = false;
+        var userEmail = '';
+        if (loginStr) {
+            try {
+                var loginData = JSON.parse(loginStr);
+                isKnown = true;
+                userEmail = loginData.email || '';
+            } catch(e) {}
+        }
+
+        // Determine product interest from form fields
+        var fields = cache.fields || {};
+        var productInterest = 'Versicherung';
+        if (fields.deckung) {
+            var deckungLabels = {
+                'haftpflicht': 'Haftpflicht',
+                'teilkasko': 'Haftpflicht + Teilkasko',
+                'vollkasko': 'Haftpflicht + Vollkasko'
+            };
+            productInterest = 'Autoversicherung – ' + (deckungLabels[fields.deckung] || fields.deckung);
+        } else if (fields.marke) {
+            productInterest = 'Autoversicherung';
+        }
+
+        // Fire enhanced abandonment event to Data Cloud
+        SalesforceInteractions.sendEvent({
+            interaction: {
+                name: 'JourneyAbandonment',
+                eventType: 'websiteEngagement',
+                catalogObject: {
+                    type: 'Product',
+                    id: 'journey-abandon-' + (cache.page || 'unknown').replace('.html', ''),
+                    attributes: {
+                        name: productInterest,
+                        category: 'Journey Abandonment',
+                        contentType: 'Form Abandonment',
+                        page: cache.page || '',
+                        formId: cache.formId || '',
+                        fieldsEntered: Object.keys(fields).join(','),
+                        userKnown: isKnown ? 'true' : 'false',
+                        fahrzeugMarke: fields.marke || '',
+                        baujahr: fields.baujahr || '',
+                        deckung: fields.deckung || '',
+                        km: fields.km || '',
+                        plz: fields.plz || ''
+                    }
+                }
             }
         });
+        log('🚨 JourneyAbandonment: ' + productInterest + ' | Known=' + isKnown + (userEmail ? ' (' + userEmail + ')' : ''));
     });
 
     // ─── HERO PERSONALIZATION (Homepage Only) ────────────
