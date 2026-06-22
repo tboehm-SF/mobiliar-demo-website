@@ -14,6 +14,67 @@ app.use(express.static(path.join(__dirname), {
 }));
 
 // ============================================================
+// Salesforce Auth Helper — supports two modes:
+//   1. OAuth Client Credentials (preferred, auto-refreshing)
+//      Requires: SF_CLIENT_ID, SF_CLIENT_SECRET, SF_LOGIN_URL
+//   2. Static Access Token (fallback)
+//      Requires: SF_INSTANCE_URL, SF_ACCESS_TOKEN
+// Returns { instanceUrl, accessToken } or null if unconfigured.
+// ============================================================
+let _cachedToken = null;
+let _tokenExpiry = 0;
+
+async function getSalesforceAuth() {
+  const clientId = process.env.SF_CLIENT_ID;
+  const clientSecret = process.env.SF_CLIENT_SECRET;
+  const loginUrl = process.env.SF_LOGIN_URL;
+
+  // Mode 1: OAuth Client Credentials (auto-refreshing)
+  if (clientId && clientSecret && loginUrl) {
+    const now = Date.now();
+    if (_cachedToken && now < _tokenExpiry) {
+      return _cachedToken;
+    }
+
+    try {
+      const tokenUrl = `${loginUrl}/services/oauth2/token`;
+      const resp = await fetch(tokenUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `grant_type=client_credentials&client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}`
+      });
+      const data = await resp.json();
+
+      if (data.access_token && data.instance_url) {
+        _cachedToken = {
+          instanceUrl: data.instance_url,
+          accessToken: data.access_token
+        };
+        // Cache for 55 minutes (tokens typically last 60 min)
+        _tokenExpiry = now + 55 * 60 * 1000;
+        console.log('[Auth] OAuth token obtained via client credentials');
+        return _cachedToken;
+      } else {
+        console.error('[Auth] OAuth token request failed:', data);
+        return null;
+      }
+    } catch (err) {
+      console.error('[Auth] OAuth token error:', err.message);
+      return null;
+    }
+  }
+
+  // Mode 2: Static token (fallback)
+  const sfInstanceUrl = process.env.SF_INSTANCE_URL;
+  const sfAccessToken = process.env.SF_ACCESS_TOKEN;
+  if (sfInstanceUrl && sfAccessToken) {
+    return { instanceUrl: sfInstanceUrl, accessToken: sfAccessToken };
+  }
+
+  return null; // Unconfigured
+}
+
+// ============================================================
 // POST /api/send-email — Publish Platform Event to Salesforce
 // The Apex trigger on Mobi_Email_Notification__e fires the
 // branded email asynchronously via the event bus.
@@ -25,11 +86,8 @@ app.post('/api/send-email', async (req, res) => {
     return res.status(400).json({ error: 'email required' });
   }
 
-  // Salesforce connection via env vars
-  const sfInstanceUrl = process.env.SF_INSTANCE_URL;
-  const sfAccessToken = process.env.SF_ACCESS_TOKEN;
-
-  if (!sfInstanceUrl || !sfAccessToken) {
+  const auth = await getSalesforceAuth();
+  if (!auth) {
     console.warn('[Email] SF credentials not configured — simulating Platform Event publish');
     return res.json({
       success: true,
@@ -54,11 +112,11 @@ app.post('/api/send-email', async (req, res) => {
   try {
     // Publish Platform Event via Salesforce REST API
     const response = await fetch(
-      `${sfInstanceUrl}/services/data/v62.0/sobjects/Mobi_Email_Notification__e`,
+      `${auth.instanceUrl}/services/data/v62.0/sobjects/Mobi_Email_Notification__e`,
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${sfAccessToken}`,
+          'Authorization': `Bearer ${auth.accessToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(platformEvent)
@@ -100,10 +158,8 @@ app.post('/api/register-event', async (req, res) => {
     return res.status(400).json({ error: 'eventId, firstName, lastName, and email are required' });
   }
 
-  const sfInstanceUrl = process.env.SF_INSTANCE_URL;
-  const sfAccessToken = process.env.SF_ACCESS_TOKEN;
-
-  if (!sfInstanceUrl || !sfAccessToken) {
+  const auth = await getSalesforceAuth();
+  if (!auth) {
     console.warn('[Register] SF credentials not configured — simulating registration');
     return res.json({
       success: true,
@@ -114,9 +170,9 @@ app.post('/api/register-event', async (req, res) => {
     });
   }
 
-  const apiBase = `${sfInstanceUrl}/services/data/v62.0`;
+  const apiBase = `${auth.instanceUrl}/services/data/v62.0`;
   const headers = {
-    'Authorization': `Bearer ${sfAccessToken}`,
+    'Authorization': `Bearer ${auth.accessToken}`,
     'Content-Type': 'application/json'
   };
 
@@ -266,10 +322,8 @@ app.post('/api/create-lead', async (req, res) => {
 
   console.log(`[Lead] Abandonment Lead request: ${email} — ${product} (${page})`);
 
-  const sfInstanceUrl = process.env.SF_INSTANCE_URL;
-  const sfAccessToken = process.env.SF_ACCESS_TOKEN;
-
-  if (!sfInstanceUrl || !sfAccessToken) {
+  const auth = await getSalesforceAuth();
+  if (!auth) {
     console.warn('[Lead] SF credentials not configured — simulating Lead creation');
     return res.json({
       success: true,
@@ -281,9 +335,9 @@ app.post('/api/create-lead', async (req, res) => {
     });
   }
 
-  const apiBase = `${sfInstanceUrl}/services/data/v62.0`;
+  const apiBase = `${auth.instanceUrl}/services/data/v62.0`;
   const headers = {
-    'Authorization': `Bearer ${sfAccessToken}`,
+    'Authorization': `Bearer ${auth.accessToken}`,
     'Content-Type': 'application/json'
   };
 
