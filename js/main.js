@@ -152,23 +152,18 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => toast.classList.remove('visible'), 3500);
   };
 
-  /* --- Login / Logout Functionality --- */
+  /* --- Login / Logout Functionality (Floating Popup) --- */
   const DEMO_USER = {
     email: 'marc.baumgartner@email.ch',
     vorname: 'Marc',
     nachname: 'Baumgartner'
   };
 
-  const loginBtn = document.getElementById('loginBtn');
-  const loginModal = document.getElementById('loginModal');
-  const loginModalClose = document.getElementById('loginModalClose');
-  const loginCancelBtn = document.getElementById('loginCancelBtn');
+  const loginFab = document.getElementById('loginFab');
+  const loginPopup = document.getElementById('loginPopup');
+  const loginPopupClose = document.getElementById('loginPopupClose');
   const loginForm = document.getElementById('loginForm');
   const prefillBtn = document.getElementById('prefillDemoUser');
-  const userInfoEl = document.getElementById('userInfo');
-  const userAvatarEl = document.getElementById('userAvatar');
-  const userNameEl = document.getElementById('userName');
-  const logoutBtn = document.getElementById('logoutBtn');
 
   // Restore login state from sessionStorage
   const savedUser = sessionStorage.getItem('mobi-login');
@@ -179,20 +174,47 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) { /* ignore */ }
   }
 
-  function openLoginModal() {
-    if (loginModal) loginModal.classList.add('visible');
+  function togglePopup() {
+    if (!loginPopup) return;
+    const isOpen = loginPopup.classList.contains('visible');
+    if (isOpen) {
+      loginPopup.classList.remove('visible');
+    } else {
+      loginPopup.classList.add('visible');
+    }
   }
-  function closeLoginModal() {
-    if (loginModal) loginModal.classList.remove('visible');
+
+  function closePopup() {
+    if (loginPopup) loginPopup.classList.remove('visible');
   }
 
   function showLoggedInState(user) {
-    if (loginBtn) loginBtn.style.display = 'none';
-    if (userInfoEl) {
-      userInfoEl.classList.add('visible');
+    if (loginFab) {
+      loginFab.classList.add('logged-in');
       const initials = (user.vorname || '').charAt(0).toUpperCase() + (user.nachname || '').charAt(0).toUpperCase();
-      if (userAvatarEl) userAvatarEl.textContent = initials || '?';
-      if (userNameEl) userNameEl.textContent = (user.vorname || '') + ' ' + (user.nachname || '');
+      const textEl = loginFab.querySelector('.login-fab__text');
+      if (textEl) {
+        textEl.innerHTML = (user.vorname || 'User') + ' ' + (user.nachname || '') + '<small>Abmelden ✕</small>';
+      }
+      // Change icon to checkmark
+      const iconEl = loginFab.querySelector('.login-fab__icon');
+      if (iconEl) {
+        iconEl.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+      }
+    }
+  }
+
+  function showLoggedOutState() {
+    if (loginFab) {
+      loginFab.classList.remove('logged-in');
+      const textEl = loginFab.querySelector('.login-fab__text');
+      if (textEl) {
+        textEl.innerHTML = 'Anmelden<small>myMobiliar</small>';
+      }
+      const iconEl = loginFab.querySelector('.login-fab__icon');
+      if (iconEl) {
+        iconEl.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>';
+      }
     }
   }
 
@@ -200,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const user = { email, vorname, nachname };
     sessionStorage.setItem('mobi-login', JSON.stringify(user));
     showLoggedInState(user);
-    closeLoginModal();
+    closePopup();
 
     // Fire Data Cloud identity events (anonymous → known)
     if (window.__loginIdentity) {
@@ -215,8 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleLogout() {
     sessionStorage.removeItem('mobi-login');
-    if (loginBtn) loginBtn.style.display = '';
-    if (userInfoEl) userInfoEl.classList.remove('visible');
+    showLoggedOutState();
 
     // Fire logout event
     if (window.__logoutIdentity) {
@@ -229,30 +250,29 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('Sie wurden abgemeldet.');
   }
 
-  if (loginBtn) {
-    loginBtn.addEventListener('click', openLoginModal);
-  }
-  if (loginModalClose) {
-    loginModalClose.addEventListener('click', closeLoginModal);
-  }
-  if (loginCancelBtn) {
-    loginCancelBtn.addEventListener('click', closeLoginModal);
-  }
-  if (loginModal) {
-    loginModal.addEventListener('click', (e) => {
-      if (e.target === loginModal) closeLoginModal();
+  // FAB click — toggle popup or logout
+  if (loginFab) {
+    loginFab.addEventListener('click', () => {
+      if (loginFab.classList.contains('logged-in')) {
+        handleLogout();
+      } else {
+        togglePopup();
+      }
     });
   }
+
+  if (loginPopupClose) {
+    loginPopupClose.addEventListener('click', closePopup);
+  }
+
+  // Demo prefill button — instant login
   if (prefillBtn) {
     prefillBtn.addEventListener('click', () => {
-      const emailInput = document.getElementById('login-email');
-      const vornameInput = document.getElementById('login-vorname');
-      const nachnameInput = document.getElementById('login-nachname');
-      if (emailInput) emailInput.value = DEMO_USER.email;
-      if (vornameInput) vornameInput.value = DEMO_USER.vorname;
-      if (nachnameInput) nachnameInput.value = DEMO_USER.nachname;
+      handleLogin(DEMO_USER.email, DEMO_USER.vorname, DEMO_USER.nachname);
     });
   }
+
+  // Manual form submit
   if (loginForm) {
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -264,13 +284,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', handleLogout);
-  }
 
-  // Close modal on Escape key
+  // Close popup on Escape or outside click
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeLoginModal();
+    if (e.key === 'Escape') closePopup();
+  });
+  document.addEventListener('click', (e) => {
+    if (loginPopup && loginPopup.classList.contains('visible')) {
+      if (!loginPopup.contains(e.target) && e.target !== loginFab && !loginFab?.contains(e.target)) {
+        closePopup();
+      }
+    }
   });
 
   /* --- Smooth Scroll for Anchors --- */

@@ -28,12 +28,6 @@
         <a href="veranstaltungen.html">Veranstaltungen</a>
         <a href="event.html">Zibelemärit</a>
         <a href="#kontakt" class="btn btn--primary btn--sm">Kontakt</a>
-        <button class="header__login" id="loginBtn">Anmelden</button>
-        <div class="header__user-info" id="userInfo">
-          <span class="avatar" id="userAvatar"></span>
-          <span id="userName"></span>
-          <button class="header__logout" id="logoutBtn">✕</button>
-        </div>
       </nav>
       <div class="header__burger" aria-label="Navigation öffnen">
         <span></span>
@@ -230,38 +224,42 @@
     </div>
   </footer>
 
-  <!-- Login Modal -->
-  <div class="login-modal-overlay" id="loginModal">
-    <div class="login-modal" style="position:relative;">
-      <button class="login-modal__close" id="loginModalClose">&times;</button>
-      <div class="login-modal__header">
-        <h3>myMobiliar Login</h3>
-        <p>Melden Sie sich an, um personalisierte Inhalte zu sehen</p>
-      </div>
-      <div class="login-modal__body">
-        <div class="login-modal__prefill">
-          <p>Demo-Benutzer verwenden:</p>
-          <button type="button" id="prefillDemoUser">Marc Baumgartner einfüllen</button>
+  <!-- Login Floating Popup -->
+  <button class="login-fab" id="loginFab">
+    <span class="login-fab__icon">
+      <svg viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+    </span>
+    <span class="login-fab__text">Anmelden<small>myMobiliar</small></span>
+  </button>
+
+  <div class="login-popup" id="loginPopup">
+    <div class="login-popup__header">
+      <button class="login-popup__close" id="loginPopupClose">\&times;</button>
+      <h3>myMobiliar Login</h3>
+      <p>Melden Sie sich an für personalisierte Inhalte</p>
+    </div>
+    <div class="login-popup__body">
+      <button class="login-popup__demo-btn" id="prefillDemoUser" type="button">
+        <span class="demo-avatar">MB</span>
+        <span class="demo-info">
+          <strong>Demo: Marc Baumgartner einfüllen</strong>
+          <span>marc.baumgartner@email.ch</span>
+        </span>
+        <span class="demo-arrow">→</span>
+      </button>
+      <div class="login-popup__divider">oder manuell anmelden</div>
+      <form class="login-popup__form" id="loginForm">
+        <div class="form-group">
+          <input type="email" id="login-email" name="email" placeholder="E-Mail-Adresse" required>
         </div>
-        <form class="login-modal__form" id="loginForm">
-          <div class="form-group">
-            <label for="login-email">E-Mail</label>
-            <input type="email" id="login-email" name="email" placeholder="ihre@email.ch" required>
-          </div>
-          <div class="form-group">
-            <label for="login-vorname">Vorname</label>
-            <input type="text" id="login-vorname" name="vorname" placeholder="Vorname">
-          </div>
-          <div class="form-group">
-            <label for="login-nachname">Nachname</label>
-            <input type="text" id="login-nachname" name="nachname" placeholder="Nachname">
-          </div>
-          <div class="login-modal__actions">
-            <button type="button" class="btn btn--outline btn--sm" id="loginCancelBtn">Abbrechen</button>
-            <button type="submit" class="btn btn--primary btn--sm">Anmelden</button>
-          </div>
-        </form>
-      </div>
+        <div class="form-group">
+          <input type="text" id="login-vorname" name="vorname" placeholder="Vorname">
+        </div>
+        <div class="form-group">
+          <input type="text" id="login-nachname" name="nachname" placeholder="Nachname">
+        </div>
+        <button type="submit" class="login-popup__submit">Anmelden</button>
+      </form>
     </div>
   </div>
 
