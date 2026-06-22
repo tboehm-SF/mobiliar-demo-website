@@ -99,14 +99,9 @@ document.addEventListener('DOMContentLoaded', () => {
       fields: fields,
       formTouched: true
     };
-    try {
-      sessionStorage.setItem(FORM_CACHE_KEY, JSON.stringify(cache));
-      // Expose for DT360 panel and tracking.js
-      window.__formCache = cache;
-      console.log('[Mobiliar] Form cache updated:', Object.keys(fields).length, 'fields');
-    } catch(e) {
-      console.error('[Mobiliar] Form cache error:', e);
-    }
+    sessionStorage.setItem(FORM_CACHE_KEY, JSON.stringify(cache));
+    // Expose for DT360 panel and tracking.js
+    window.__formCache = cache;
   }
 
   function clearFormCache() {
@@ -145,14 +140,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Cache form state on every input/change event — use form-level delegation
-    console.log('[Mobiliar] Attaching form cache listeners to', form.id || 'calc-form');
-    form.addEventListener('input', (e) => {
-      console.log('[Mobiliar] Form input event from', e.target.name || e.target.id);
+    // Cache form state on every input/change event — use form-level delegation
+    form.addEventListener('input', () => {
       formTouched = true;
       cacheFormState(form);
     });
-    form.addEventListener('change', (e) => {
-      console.log('[Mobiliar] Form change event from', e.target.name || e.target.id);
+    form.addEventListener('change', () => {
       formTouched = true;
       cacheFormState(form);
     });
