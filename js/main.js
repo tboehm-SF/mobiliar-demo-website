@@ -154,9 +154,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* --- Login / Logout Functionality --- */
   const DEMO_USER = {
-    email: 'tbohm@mobiliar-demo.ch',
-    vorname: 'Thomas',
-    nachname: 'Bohm'
+    email: 'marc.baumgartner@email.ch',
+    vorname: 'Marc',
+    nachname: 'Baumgartner'
   };
 
   const loginBtn = document.getElementById('loginBtn');
