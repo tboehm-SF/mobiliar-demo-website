@@ -1670,6 +1670,87 @@
     var heroEl = document.querySelector('.evt-hero');
     if (heroEl) heroObserver.observe(heroEl);
 
+    // ═══ EVENT REGISTRATION FORM SUBMIT ═══
+    var regForm = document.getElementById('eventRegForm');
+    if (regForm) {
+      regForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        var submitBtn = regForm.querySelector('button[type="submit"]');
+        var originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = '⏳ Wird gesendet...';
+        submitBtn.style.opacity = '0.7';
+
+        var payload = {
+          eventId: document.getElementById('reg-event').value,
+          firstName: document.getElementById('reg-vorname').value.trim(),
+          lastName: document.getElementById('reg-nachname').value.trim(),
+          email: document.getElementById('reg-email').value.trim(),
+          phone: document.getElementById('reg-telefon').value.trim(),
+          persons: parseInt(document.getElementById('reg-personen').value) || 1,
+          remarks: document.getElementById('reg-bemerkung').value.trim()
+        };
+
+        fetch('/api/register-event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+          if (data.success) {
+            // Find event name for confirmation
+            var evtName = '';
+            var evtSelect = document.getElementById('reg-event');
+            if (evtSelect && evtSelect.selectedOptions[0]) {
+              evtName = evtSelect.selectedOptions[0].textContent;
+            }
+
+            // Show success UI
+            regForm.innerHTML =
+              '<div style="text-align:center; padding: 40px 20px;">' +
+                '<div style="font-size: 64px; margin-bottom: 16px;">🎉</div>' +
+                '<h3 style="color: var(--mobi-red); margin-bottom: 12px;">Anmeldung erfolgreich!</h3>' +
+                '<p style="color: var(--mobi-gray-600); font-size: 15px; margin-bottom: 8px;">' +
+                  'Vielen Dank, <strong>' + payload.firstName + ' ' + payload.lastName + '</strong>!' +
+                '</p>' +
+                '<p style="color: var(--mobi-gray-600); font-size: 14px; margin-bottom: 24px;">' +
+                  'Ihre Anmeldung für <strong>' + evtName + '</strong> wurde erfolgreich registriert.' +
+                  (payload.persons > 1 ? ' (' + payload.persons + ' Personen)' : '') +
+                '</p>' +
+                '<div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin-bottom: 24px;">' +
+                  '<p style="color: #15803d; font-size: 14px; margin: 0;">✅ Sie erhalten in Kürze eine Bestätigungs-E-Mail an <strong>' + payload.email + '</strong></p>' +
+                '</div>' +
+                '<button onclick="location.reload()" class="btn btn--primary btn--sm" style="margin: 0 auto;">' +
+                  'Weitere Anmeldung' +
+                '</button>' +
+              '</div>';
+
+            // Track registration
+            if (window.__trackEvent) window.__trackEvent('Event Registration', {
+              eventId: payload.eventId,
+              email: payload.email,
+              persons: payload.persons
+            });
+          } else {
+            // Show error
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+            submitBtn.style.opacity = '1';
+            alert('Fehler bei der Anmeldung: ' + (data.error || 'Unbekannter Fehler. Bitte versuchen Sie es erneut.'));
+          }
+        })
+        .catch(function(err) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+          submitBtn.style.opacity = '1';
+          alert('Verbindungsfehler. Bitte versuchen Sie es später erneut.');
+          console.error('[Register] Error:', err);
+        });
+      });
+    }
+
     // ═══ PERSONALIZATION via Data Cloud ═══
     setTimeout(function() {
       var persBox = document.getElementById('evtPersonalization');

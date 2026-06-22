@@ -88,6 +88,169 @@ app.post('/api/send-email', async (req, res) => {
   }
 });
 
+// ============================================================
+// POST /api/register-event — Register for an event
+// Creates or finds a Lead, then creates an Event_Registration__c
+// record linked to both the Event Instance and the Lead.
+// ============================================================
+app.post('/api/register-event', async (req, res) => {
+  const { eventId, firstName, lastName, email, phone, persons, remarks } = req.body;
+
+  if (!eventId || !firstName || !lastName || !email) {
+    return res.status(400).json({ error: 'eventId, firstName, lastName, and email are required' });
+  }
+
+  const sfInstanceUrl = process.env.SF_INSTANCE_URL;
+  const sfAccessToken = process.env.SF_ACCESS_TOKEN;
+
+  if (!sfInstanceUrl || !sfAccessToken) {
+    console.warn('[Register] SF credentials not configured — simulating registration');
+    return res.json({
+      success: true,
+      message: 'Registration simulated (SF credentials not configured)',
+      simulated: true,
+      leadId: 'SIMULATED_LEAD_001',
+      registrationId: 'SIMULATED_REG_001'
+    });
+  }
+
+  const apiBase = `${sfInstanceUrl}/services/data/v62.0`;
+  const headers = {
+    'Authorization': `Bearer ${sfAccessToken}`,
+    'Content-Type': 'application/json'
+  };
+
+  try {
+    // ── Step 1: Find or create Lead by email ──
+    let leadId = null;
+
+    // Search for existing Lead
+    const searchQuery = encodeURIComponent(
+      `SELECT Id FROM Lead WHERE Email = '${email.replace(/'/g, "\\'")}' AND IsConverted = false LIMIT 1`
+    );
+    const searchResp = await fetch(`${apiBase}/query/?q=${searchQuery}`, { headers });
+    const searchData = await searchResp.json();
+
+    if (searchData.totalSize > 0) {
+      // Lead exists — update with latest info
+      leadId = searchData.records[0].Id;
+      console.log(`[Register] Found existing Lead ${leadId} for ${email}`);
+
+      const updatePayload = { FirstName: firstName, LastName: lastName };
+      if (phone) updatePayload.Phone = phone;
+
+      await fetch(`${apiBase}/sobjects/Lead/${leadId}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(updatePayload)
+      });
+    } else {
+      // Create new Lead
+      const leadPayload = {
+        FirstName: firstName,
+        LastName: lastName,
+        Email: email,
+        Company: '[Event-Anmeldung]',
+        LeadSource: 'Web',
+        Country: 'Switzerland',
+        Description: remarks ? `Event-Bemerkung: ${remarks}` : ''
+      };
+      if (phone) leadPayload.Phone = phone;
+
+      const createResp = await fetch(`${apiBase}/sobjects/Lead`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(leadPayload)
+      });
+      const createData = await createResp.json();
+
+      if (createData.success) {
+        leadId = createData.id;
+        console.log(`[Register] Created new Lead ${leadId} for ${email}`);
+      } else {
+        console.error('[Register] Failed to create Lead:', createData);
+        return res.status(500).json({ error: 'Failed to create Lead', details: createData });
+      }
+    }
+
+    // ── Step 2: Also check/create Contact for Event_Registration link ──
+    let contactId = null;
+
+    // Search for existing Contact by email
+    const contactQuery = encodeURIComponent(
+      `SELECT Id FROM Contact WHERE Email = '${email.replace(/'/g, "\\'")}' LIMIT 1`
+    );
+    const contactResp = await fetch(`${apiBase}/query/?q=${contactQuery}`, { headers });
+    const contactData = await contactResp.json();
+
+    if (contactData.totalSize > 0) {
+      contactId = contactData.records[0].Id;
+      console.log(`[Register] Found existing Contact ${contactId} for ${email}`);
+    }
+    // If no Contact exists, that's fine — Contact__c is optional on Event_Registration__c
+
+    // ── Step 3: Create Event_Registration__c ──
+    const regPayload = {
+      Event_Instance__c: eventId,
+      Status__c: 'Registered',
+      Guest_Role__c: 'Interessent',
+      Registration_Date__c: new Date().toISOString()
+    };
+    if (contactId) regPayload.Contact__c = contactId;
+
+    const regResp = await fetch(`${apiBase}/sobjects/Event_Registration__c`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(regPayload)
+    });
+    const regData = await regResp.json();
+
+    if (regData.success) {
+      console.log(`[Register] Created Event_Registration ${regData.id} for Lead ${leadId} → Event ${eventId}`);
+
+      // ── Step 4: Update Lead description with event registration reference ──
+      const eventNames = {
+        'a32J60000009PwGIAU': 'Mobiliar Familientag',
+        'a32J60000009Pw6IAE': 'KMU Forum',
+        'a32J60000009PwBIAU': 'Nachhaltigkeits-Dialog',
+        'a32J60000009PwLIAU': 'Digital Innovation Night',
+        'a32J60000009PvwIAE': 'Zibelemärit-Apéro'
+      };
+      const eventLabel = eventNames[eventId] || eventId;
+      const regNote = `Event-Anmeldung: ${eventLabel} (${new Date().toLocaleDateString('de-CH')})` +
+        (persons > 1 ? ` — ${persons} Personen` : '') +
+        (remarks ? ` — ${remarks}` : '');
+
+      // Append to Lead description
+      const descResp = await fetch(`${apiBase}/query/?q=${encodeURIComponent(`SELECT Description FROM Lead WHERE Id = '${leadId}' LIMIT 1`)}`, { headers });
+      const descData = await descResp.json();
+      const existingDesc = descData.records?.[0]?.Description || '';
+      const newDesc = existingDesc ? `${existingDesc}\n${regNote}` : regNote;
+
+      await fetch(`${apiBase}/sobjects/Lead/${leadId}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ Description: newDesc })
+      });
+
+      res.json({
+        success: true,
+        message: 'Anmeldung erfolgreich!',
+        leadId,
+        registrationId: regData.id,
+        contactLinked: !!contactId
+      });
+    } else {
+      console.error('[Register] Failed to create Event_Registration:', regData);
+      res.status(500).json({ error: 'Failed to create registration', details: regData });
+    }
+
+  } catch (err) {
+    console.error('[Register] Error:', err.message);
+    res.status(500).json({ error: 'Registration failed', message: err.message });
+  }
+});
+
 // Fallback to index.html for clean URLs
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
