@@ -745,6 +745,67 @@ SalesforceInteractions.init({
         });
     });
 
+    // ─── LOGIN / IDENTITY STITCHING ───────────────────────
+    // Called from main.js when user logs in via the login modal.
+    // Fires three events:
+    //   1. websiteEngagement "Login" — captures the login action
+    //   2. contactPointEmail  — registers the email address
+    //   3. identity           — stitches anonymous cookie to known profile
+    window.__loginIdentity = function (email, firstName, lastName) {
+        if (!email) return;
+
+        // 1. Login engagement event
+        SalesforceInteractions.sendEvent({
+            interaction: {
+                name: 'Login',
+                eventType: 'websiteEngagement'
+            }
+        });
+        log('Login event fired');
+
+        // 2. Contact Point Email
+        SalesforceInteractions.sendEvent({
+            interaction: {
+                name: 'Login Email Capture'
+            },
+            user: {
+                attributes: {
+                    eventType: 'contactPointEmail',
+                    email: email
+                }
+            }
+        });
+        log('ContactPointEmail: ' + email);
+
+        // 3. Identity stitching — anonymous → known
+        SalesforceInteractions.sendEvent({
+            interaction: {
+                name: 'Identity Capture'
+            },
+            user: {
+                attributes: {
+                    eventType: 'identity',
+                    firstName: firstName || '',
+                    lastName: lastName || '',
+                    email: email,
+                    isAnonymous: false
+                }
+            }
+        });
+        log('Identity Stitched (Login): ' + email + ' — anonymous → known');
+    };
+
+    // Called from main.js when user logs out
+    window.__logoutIdentity = function () {
+        SalesforceInteractions.sendEvent({
+            interaction: {
+                name: 'Logout',
+                eventType: 'websiteEngagement'
+            }
+        });
+        log('Logout event fired — known → anonymous');
+    };
+
     // ─── GLOBAL EVENT HOOK ───────────────────────────────
     // Make trackEvent available for main.js and other scripts
     window.__trackEvent = function (name, data) {
