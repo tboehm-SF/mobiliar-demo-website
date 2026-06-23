@@ -214,6 +214,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let parsed;
     try { parsed = JSON.parse(cache); } catch(e) { return; }
 
+    // Persist abandonment flag in sessionStorage so the next page's
+    // DT360 panel can detect and display the "Journey Abbruch" state.
+    parsed.abandoned = true;
+    parsed.abandonedAt = new Date().toISOString();
+    sessionStorage.setItem(FORM_CACHE_KEY, JSON.stringify(parsed));
+
     // Check if user is logged in (known identity)
     const loginData = sessionStorage.getItem('mobi-login');
 

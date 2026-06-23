@@ -607,6 +607,15 @@
         journeyState.formPage = cacheData.page || '';
         journeyState.formId = cacheData.formId || '';
         journeyState.formFields = cacheData.fields || {};
+
+        // Detect abandonment: either the flag was explicitly set by main.js
+        // during beforeunload, OR the user is now on a different page than
+        // where the form was started (they navigated away without submitting).
+        var currentFile = (window.location.pathname.split('/').pop() || 'index.html');
+        var formPage = cacheData.page || '';
+        if (cacheData.abandoned || (formPage && formPage !== currentFile)) {
+          journeyState.abandoned = true;
+        }
       }
     } catch(e) {}
   }
