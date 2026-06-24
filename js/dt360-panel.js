@@ -677,19 +677,28 @@
     else if (stored === 'reject') { consentState.status = 'OptOut'; }
   }
 
-  // --- Wait for SDK and hook ---
-  var elapsed = 0;
-  var pollInterval = setInterval(function() {
-    elapsed += POLL_MS;
-    var SI = window.SalesforceInteractions || window.DataCloudInteractions;
-    if (SI) {
-      clearInterval(pollInterval);
-      hookSDK(SI);
-    } else if (elapsed >= 15000) {
-      clearInterval(pollInterval);
-      console.warn('[DT360] SDK not detected after 15s');
-    }
-  }, POLL_MS);
+  // --- Hook SDK immediately if available, otherwise poll ---
+  // The SDK script loads before dt360-panel.js, so SalesforceInteractions
+  // is usually available immediately. Hook it BEFORE the init().then()
+  // callback fires to ensure we capture the initial page view event.
+  var SI_immediate = window.SalesforceInteractions || window.DataCloudInteractions;
+  if (SI_immediate) {
+    hookSDK(SI_immediate);
+  } else {
+    // Fallback: poll if SDK is loaded asynchronously
+    var elapsed = 0;
+    var pollInterval = setInterval(function() {
+      elapsed += POLL_MS;
+      var SI = window.SalesforceInteractions || window.DataCloudInteractions;
+      if (SI) {
+        clearInterval(pollInterval);
+        hookSDK(SI);
+      } else if (elapsed >= 15000) {
+        clearInterval(pollInterval);
+        console.warn('[DT360] SDK not detected after 15s');
+      }
+    }, POLL_MS);
+  }
 
   // --- Keyboard shortcut: Ctrl+Shift+D to toggle ---
   document.addEventListener('keydown', function(e) {
