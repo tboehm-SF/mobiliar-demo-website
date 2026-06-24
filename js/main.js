@@ -252,8 +252,21 @@ document.addEventListener('DOMContentLoaded', () => {
           new Blob([JSON.stringify(leadPayload)], { type: 'application/json' })
         );
         console.log('[Mobiliar] Abandonment Lead beacon sent:', leadPayload);
+
+        // Also trigger email notification via Platform Event
+        const emailPayload = {
+          email: user.email,
+          firstName: user.vorname || '',
+          lastName: user.nachname || '',
+          product: leadPayload.product
+        };
+        navigator.sendBeacon(
+          '/api/send-email',
+          new Blob([JSON.stringify(emailPayload)], { type: 'application/json' })
+        );
+        console.log('[Mobiliar] Abandonment email beacon sent:', emailPayload);
       } catch(e) {
-        console.warn('[Mobiliar] Abandonment Lead failed:', e);
+        console.warn('[Mobiliar] Abandonment Lead/Email failed:', e);
       }
     }
   });
