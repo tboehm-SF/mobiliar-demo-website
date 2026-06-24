@@ -439,6 +439,124 @@ app.post('/api/create-lead', async (req, res) => {
   }
 });
 
+// ============================================================
+// POST /api/notify-abandonment — Send Custom Notification in SF
+// Fires a bell notification in the Salesforce console when a
+// logged-in user abandons a form on the website.
+// Uses the Mobi_Journey_Abandonment_Alert custom notification type.
+// ============================================================
+app.post('/api/notify-abandonment', async (req, res) => {
+  const { email, firstName, lastName, product, page } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: 'email required' });
+  }
+
+  const auth = await getSalesforceAuth();
+  if (!auth) {
+    console.warn('[Notify] SF credentials not configured — simulating notification');
+    return res.json({
+      success: true,
+      message: 'Notification simulated (SF credentials not configured)',
+      simulated: true
+    });
+  }
+
+  const apiBase = `${auth.instanceUrl}/services/data/v62.0`;
+  const headers = {
+    'Authorization': `Bearer ${auth.accessToken}`,
+    'Content-Type': 'application/json'
+  };
+
+  try {
+    // Step 1: Find the Custom Notification Type ID
+    const notifTypeQuery = encodeURIComponent(
+      "SELECT Id FROM CustomNotificationType WHERE DeveloperName = 'Mobi_Journey_Abandonment_Alert' LIMIT 1"
+    );
+    const notifTypeResp = await fetch(`${apiBase}/query/?q=${notifTypeQuery}`, { headers });
+    const notifTypeData = await notifTypeResp.json();
+
+    if (!notifTypeData.records || notifTypeData.records.length === 0) {
+      console.error('[Notify] Custom Notification Type not found');
+      return res.status(404).json({ error: 'Custom Notification Type not found on org' });
+    }
+    const notifTypeId = notifTypeData.records[0].Id;
+
+    // Step 2: Find the target user (org owner / admin) to notify
+    // We notify the org's admin user (first System Administrator found)
+    const userQuery = encodeURIComponent(
+      "SELECT Id FROM User WHERE Profile.Name = 'System Administrator' AND IsActive = true AND Username LIKE '%mobiliar%' LIMIT 1"
+    );
+    const userResp = await fetch(`${apiBase}/query/?q=${userQuery}`, { headers });
+    const userData = await userResp.json();
+
+    let targetUserId;
+    if (userData.records && userData.records.length > 0) {
+      targetUserId = userData.records[0].Id;
+    } else {
+      // Fallback: get the running user (Connected App user)
+      const whoResp = await fetch(`${apiBase}/sobjects/User/Me`, { headers });
+      const whoData = await whoResp.json();
+      targetUserId = whoData.Id;
+    }
+
+    // Step 3: Find the Lead record to link the notification to
+    let targetId = targetUserId; // default: link to user if no Lead found
+    const leadQuery = encodeURIComponent(
+      `SELECT Id FROM Lead WHERE Email = '${email.replace(/'/g, "\\'")}' AND IsConverted = false ORDER BY CreatedDate DESC LIMIT 1`
+    );
+    const leadResp = await fetch(`${apiBase}/query/?q=${leadQuery}`, { headers });
+    const leadData = await leadResp.json();
+    if (leadData.records && leadData.records.length > 0) {
+      targetId = leadData.records[0].Id;
+    }
+
+    // Step 4: Send the Custom Notification
+    const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Unbekannt';
+    const productLabel = product || 'Versicherung';
+
+    const notifPayload = {
+      inputs: [{
+        customNotifTypeId: notifTypeId,
+        recipientIds: [targetUserId],
+        title: `🔔 Journey-Abbruch: ${fullName}`,
+        body: `${fullName} (${email}) hat den ${productLabel}-Rechner auf ${page || 'der Website'} verlassen ohne abzuschliessen.`,
+        targetId: targetId
+      }]
+    };
+
+    const notifResp = await fetch(
+      `${auth.instanceUrl}/services/data/v62.0/actions/standard/customNotificationAction`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(notifPayload)
+      }
+    );
+    const notifResult = await notifResp.json();
+
+    if (notifResp.ok) {
+      console.log(`[Notify] Custom Notification sent for ${email} → user ${targetUserId}`);
+      res.json({
+        success: true,
+        message: `Notification sent for ${fullName} (${email})`,
+        targetUserId,
+        targetId
+      });
+    } else {
+      console.error('[Notify] Custom Notification error:', notifResult);
+      res.status(notifResp.status || 500).json({
+        error: 'Failed to send notification',
+        details: notifResult
+      });
+    }
+
+  } catch (err) {
+    console.error('[Notify] Error:', err.message);
+    res.status(500).json({ error: 'Notification failed', message: err.message });
+  }
+});
+
 // Fallback to index.html for clean URLs
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));

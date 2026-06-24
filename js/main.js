@@ -253,20 +253,21 @@ document.addEventListener('DOMContentLoaded', () => {
         );
         console.log('[Mobiliar] Abandonment Lead beacon sent:', leadPayload);
 
-        // Also trigger email notification via Platform Event
-        const emailPayload = {
+        // Also trigger Salesforce console notification for the sales team
+        const notifyPayload = {
           email: user.email,
           firstName: user.vorname || '',
           lastName: user.nachname || '',
-          product: leadPayload.product
+          product: leadPayload.product,
+          page: parsed.page || currentPage
         };
         navigator.sendBeacon(
-          '/api/send-email',
-          new Blob([JSON.stringify(emailPayload)], { type: 'application/json' })
+          '/api/notify-abandonment',
+          new Blob([JSON.stringify(notifyPayload)], { type: 'application/json' })
         );
-        console.log('[Mobiliar] Abandonment email beacon sent:', emailPayload);
+        console.log('[Mobiliar] Abandonment notification beacon sent:', notifyPayload);
       } catch(e) {
-        console.warn('[Mobiliar] Abandonment Lead/Email failed:', e);
+        console.warn('[Mobiliar] Abandonment Lead/Notification failed:', e);
       }
     }
   });
