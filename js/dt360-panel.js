@@ -700,6 +700,29 @@
     }, POLL_MS);
   }
 
+  // --- Always fire a synthetic Page View event on load ---
+  // The SDK's init().then() resolves synchronously in tracking.js, which means
+  // the page view sendEvent fires BEFORE dt360-panel.js loads. To ensure the
+  // toast notification always appears on every page load, we fire our own
+  // synthetic page view event into the panel.
+  var pageNames = {
+    'Homepage': 'Homepage View',
+    'Praemienrechner': 'Prämienrechner View',
+    'Autoversicherung': 'Autoversicherung View',
+    'Event': 'Event Page View',
+    'Veranstaltungen': 'Veranstaltungen Overview View'
+  };
+  var currentPageType = detectPageType();
+  var syntheticName = pageNames[currentPageType] || 'Page View';
+
+  // Check if this page view was already captured (hook was fast enough)
+  var alreadyCaptured = events.some(function(ev) { return ev.name === syntheticName; });
+  if (!alreadyCaptured) {
+    logEvent({
+      interaction: { name: syntheticName, eventType: 'websiteEngagement' }
+    });
+  }
+
   // --- Keyboard shortcut: Ctrl+Shift+D to toggle ---
   document.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.shiftKey && e.key === 'D') {
