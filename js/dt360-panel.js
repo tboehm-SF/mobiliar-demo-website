@@ -397,19 +397,29 @@
       '<div><div class="dt360-toast-label">📡 Event erkannt</div>' +
       '<div class="dt360-toast-name">' + (item.name || '?') + '</div></div>';
 
-    // Animate in
-    requestAnimationFrame(function() {
-      el.classList.add('show');
-    });
+    // Reset to hidden state with transitions disabled
+    el.classList.remove('show');
+    el.style.transition = 'none';
+    el.offsetWidth; // force paint of hidden state
 
-    // Animate out after 2.5s
+    // Re-enable transitions and animate in after a short delay
+    // Using setTimeout(0) + rAF ensures the browser has fully painted
+    // the hidden state before we trigger the transition to visible.
     setTimeout(function() {
-      el.classList.remove('show');
-      setTimeout(function() {
-        toastShowing = false;
-        processToastQueue();
-      }, 400);
-    }, 2500);
+      el.style.transition = '';
+      requestAnimationFrame(function() {
+        el.classList.add('show');
+
+        // Only start the hide timer AFTER show class is applied
+        setTimeout(function() {
+          el.classList.remove('show');
+          setTimeout(function() {
+            toastShowing = false;
+            processToastQueue();
+          }, 400);
+        }, 4000);
+      });
+    }, 50);
   }
 
   // --- Event Persistence (sessionStorage) ---
