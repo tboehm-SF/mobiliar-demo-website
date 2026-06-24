@@ -309,10 +309,11 @@ app.post('/api/register-event', async (req, res) => {
 });
 
 // ============================================================
-// POST /api/create-lead — Journey Abandonment Lead Creation
+// POST /api/create-lead — Journey Abandonment → Opportunity Creation
 // Called via navigator.sendBeacon when a logged-in user abandons
 // a partially filled form (e.g. Prämienrechner / Autoversicherung).
-// Creates a Lead in Salesforce CRM with product interest context.
+// Creates an Opportunity in Salesforce CRM linked to the existing
+// Marc Baumgartner Account, with product interest context.
 // ============================================================
 app.post('/api/create-lead', async (req, res) => {
   const { email, firstName, lastName, product, source, page, formFields } = req.body;
@@ -321,17 +322,20 @@ app.post('/api/create-lead', async (req, res) => {
     return res.status(400).json({ error: 'email required' });
   }
 
-  console.log(`[Lead] Abandonment Lead request: ${email} — ${product} (${page})`);
+  const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Kunde';
+  const productLabel = product || 'Versicherung';
+
+  console.log(`[Opp] Abandonment Opportunity request: ${email} — ${productLabel} (${page})`);
 
   const auth = await getSalesforceAuth();
   if (!auth) {
-    console.warn('[Lead] SF credentials not configured — simulating Lead creation');
+    console.warn('[Opp] SF credentials not configured — simulating Opportunity creation');
     return res.json({
       success: true,
-      message: 'Lead creation simulated (SF credentials not configured)',
+      message: 'Opportunity creation simulated (SF credentials not configured)',
       simulated: true,
       email: email,
-      product: product,
+      product: productLabel,
       source: source
     });
   }
@@ -343,16 +347,41 @@ app.post('/api/create-lead', async (req, res) => {
   };
 
   try {
-    // Check if Lead already exists for this email
-    const searchQuery = encodeURIComponent(
-      `SELECT Id, Description FROM Lead WHERE Email = '${email.replace(/'/g, "\\'")}' AND IsConverted = false LIMIT 1`
-    );
-    const searchResp = await fetch(`${apiBase}/query/?q=${searchQuery}`, { headers });
-    const searchData = await searchResp.json();
+    // Step 1: Find the Account by email (Contact → AccountId) or fallback to known Account
+    let accountId = null;
 
-    // Build description with abandonment context
+    // Try to find via Contact email
+    const contactQuery = encodeURIComponent(
+      `SELECT AccountId FROM Contact WHERE Email = '${email.replace(/'/g, "\\'")}' AND AccountId != null LIMIT 1`
+    );
+    const contactResp = await fetch(`${apiBase}/query/?q=${contactQuery}`, { headers });
+    const contactData = await contactResp.json();
+
+    if (contactData.totalSize > 0) {
+      accountId = contactData.records[0].AccountId;
+      console.log(`[Opp] Found Account ${accountId} via Contact email`);
+    } else {
+      // Fallback: search Account by name
+      const nameQuery = encodeURIComponent(
+        `SELECT Id FROM Account WHERE Name LIKE '%${(lastName || '').replace(/'/g, "\\'")}%' LIMIT 1`
+      );
+      const nameResp = await fetch(`${apiBase}/query/?q=${nameQuery}`, { headers });
+      const nameData = await nameResp.json();
+
+      if (nameData.totalSize > 0) {
+        accountId = nameData.records[0].Id;
+        console.log(`[Opp] Found Account ${accountId} via name search`);
+      }
+    }
+
+    if (!accountId) {
+      console.warn('[Opp] No Account found — cannot create Opportunity');
+      return res.status(404).json({ error: 'No Account found for this user' });
+    }
+
+    // Step 2: Build Opportunity description
     const abandonNote = [
-      `Journey-Abbruch: ${product || 'Versicherung'}`,
+      `Journey-Abbruch: ${productLabel}`,
       `Seite: ${page || 'unbekannt'}`,
       `Zeitpunkt: ${new Date().toLocaleString('de-CH')}`,
       formFields?.marke ? `Fahrzeug: ${formFields.marke}` : '',
@@ -362,80 +391,46 @@ app.post('/api/create-lead', async (req, res) => {
       formFields?.plz ? `PLZ: ${formFields.plz}` : '',
     ].filter(Boolean).join('\n');
 
-    let leadId;
+    // Step 3: Create Opportunity
+    // Close date = 30 days from now
+    const closeDate = new Date();
+    closeDate.setDate(closeDate.getDate() + 30);
+    const closeDateStr = closeDate.toISOString().split('T')[0];
 
-    if (searchData.totalSize > 0) {
-      // Update existing Lead with abandonment note
-      leadId = searchData.records[0].Id;
-      const existingDesc = searchData.records[0].Description || '';
-      const newDesc = existingDesc
-        ? `${existingDesc}\n\n--- ${abandonNote}`
-        : abandonNote;
+    const oppPayload = {
+      Name: `${productLabel} – ${fullName}`,
+      AccountId: accountId,
+      StageName: 'Review',
+      CloseDate: closeDateStr,
+      Description: abandonNote,
+      LeadSource: 'Web'
+    };
 
-      const updatePayload = {
-        Description: newDesc,
-        LeadSource: 'Web'
-      };
+    const createResp = await fetch(`${apiBase}/sobjects/Opportunity`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(oppPayload)
+    });
+    const createData = await createResp.json();
 
-      // Set product interest if field exists
-      try {
-        updatePayload['SDO_Sales_Product_Interest__c'] = product || 'Versicherung';
-      } catch(e) {}
-
-      try {
-        updatePayload['Lead_Source_Detail__c'] = source || 'Journey Abandonment';
-      } catch(e) {}
-
-      await fetch(`${apiBase}/sobjects/Lead/${leadId}`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify(updatePayload)
+    if (createData.success) {
+      console.log(`[Opp] Created Opportunity ${createData.id} for ${email} on Account ${accountId}`);
+      res.json({
+        success: true,
+        message: `Opportunity created for ${fullName}`,
+        opportunityId: createData.id,
+        accountId: accountId,
+        product: productLabel,
+        source: source
       });
-      console.log(`[Lead] Updated existing Lead ${leadId} with abandonment context`);
-
     } else {
-      // Create new Lead
-      const leadPayload = {
-        FirstName: firstName || '',
-        LastName: lastName || email.split('@')[0],
-        Email: email,
-        Company: '[Prämienrechner-Abbruch]',
-        LeadSource: 'Web',
-        Description: abandonNote,
-        Country: 'Switzerland'
-      };
-
-      // Set custom fields if they exist on org
-      try { leadPayload['SDO_Sales_Product_Interest__c'] = product || 'Versicherung'; } catch(e) {}
-      try { leadPayload['Lead_Source_Detail__c'] = source || 'Journey Abandonment'; } catch(e) {}
-
-      const createResp = await fetch(`${apiBase}/sobjects/Lead`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(leadPayload)
-      });
-      const createData = await createResp.json();
-
-      if (createData.success) {
-        leadId = createData.id;
-        console.log(`[Lead] Created abandonment Lead ${leadId} for ${email}`);
-      } else {
-        console.error('[Lead] Failed to create Lead:', createData);
-        return res.status(500).json({ error: 'Failed to create Lead', details: createData });
-      }
+      console.error('[Opp] Failed to create Opportunity:', createData);
+      res.status(500).json({ error: 'Failed to create Opportunity', details: createData });
     }
 
-    res.json({
-      success: true,
-      message: `Abandonment Lead ${searchData.totalSize > 0 ? 'updated' : 'created'} for ${email}`,
-      leadId: leadId,
-      product: product,
-      source: source
-    });
-
   } catch (err) {
-    console.error('[Lead] Error:', err.message);
-    res.status(500).json({ error: 'Lead creation failed', message: err.message });
+    console.error('[Opp] Error:', err.message);
+    res.status(500).json({ error: 'Opportunity creation failed', message: err.message });
   }
 });
 
@@ -500,15 +495,17 @@ app.post('/api/notify-abandonment', async (req, res) => {
       targetUserId = whoData.Id;
     }
 
-    // Step 3: Find the Lead record to link the notification to
-    let targetId = targetUserId; // default: link to user if no Lead found
-    const leadQuery = encodeURIComponent(
-      `SELECT Id FROM Lead WHERE Email = '${email.replace(/'/g, "\\'")}' AND IsConverted = false ORDER BY CreatedDate DESC LIMIT 1`
+    // Step 3: Find the most recent Opportunity to link the notification to
+    let targetId = targetUserId; // default: link to user if no Opportunity found
+
+    // Find Opportunity via Contact email → Account → most recent Opportunity
+    const oppQuery = encodeURIComponent(
+      `SELECT Id FROM Opportunity WHERE Account.Id IN (SELECT AccountId FROM Contact WHERE Email = '${email.replace(/'/g, "\\'")}') ORDER BY CreatedDate DESC LIMIT 1`
     );
-    const leadResp = await fetch(`${apiBase}/query/?q=${leadQuery}`, { headers });
-    const leadData = await leadResp.json();
-    if (leadData.records && leadData.records.length > 0) {
-      targetId = leadData.records[0].Id;
+    const oppResp = await fetch(`${apiBase}/query/?q=${oppQuery}`, { headers });
+    const oppData = await oppResp.json();
+    if (oppData.records && oppData.records.length > 0) {
+      targetId = oppData.records[0].Id;
     }
 
     // Step 4: Send the Custom Notification
