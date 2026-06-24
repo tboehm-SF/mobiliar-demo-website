@@ -9,8 +9,11 @@
   // --- Config ---
   var MAX_EVENTS = 15;
   var POLL_MS = 500;
+  var EVENTS_STORAGE_KEY = 'dt360-events';
   var events = [];
   var isOpen = false;
+  var toastQueue = [];
+  var toastShowing = false;
   var identityState = { status: 'anonymous', email: '', firstName: '', lastName: '' };
   var consentState = { status: 'Ausstehend', timestamp: null };
   var emailState = { sent: false, to: '', subject: '', template: '', timestamp: null };
@@ -115,6 +118,26 @@
     '.dt360-consent-badge.optin{background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.2)}',
     '.dt360-consent-badge.optout{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.2)}',
     '.dt360-consent-badge.pending{background:rgba(161,161,170,.12);color:#a1a1aa;border:1px solid rgba(161,161,170,.2)}',
+
+    /* Toast notification */
+    '.dt360-toast{position:fixed;top:140px;left:16px;z-index:9510;',
+    'background:rgba(26,26,26,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);',
+    'color:#fff;padding:10px 16px;border-radius:10px;font-family:"SF Mono","Fira Code",monospace;',
+    'font-size:11px;max-width:340px;box-shadow:0 6px 28px rgba(0,0,0,.4);',
+    'border:1px solid rgba(255,255,255,.1);',
+    'transform:translateX(-120%);opacity:0;transition:all .35s cubic-bezier(.4,0,.2,1);',
+    'display:flex;align-items:center;gap:8px;pointer-events:none}',
+    '.dt360-toast.show{transform:translateX(0);opacity:1}',
+    '.dt360-toast .dt360-toast-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:#22c55e}',
+    '.dt360-toast .dt360-toast-dot.identity{background:#22c55e}',
+    '.dt360-toast .dt360-toast-dot.consent{background:#facc15}',
+    '.dt360-toast .dt360-toast-dot.email{background:#da2323}',
+    '.dt360-toast .dt360-toast-dot.journey{background:#ef4444}',
+    '.dt360-toast .dt360-toast-dot.pageview{background:#60a5fa}',
+    '.dt360-toast .dt360-toast-dot.navigation{background:#a78bfa}',
+    '.dt360-toast .dt360-toast-dot.default{background:#22c55e}',
+    '.dt360-toast-label{color:#a1a1aa;font-size:9px;text-transform:uppercase;letter-spacing:.5px}',
+    '.dt360-toast-name{color:#fff;font-weight:600}',
 
     /* Mobile */
     '@media(max-width:480px){.dt360-panel{width:calc(100vw - 32px);left:16px}',
@@ -325,6 +348,94 @@
 
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
+  // --- Toast Notification System ---
+  var toastEl = null;
+
+  function createToastEl() {
+    if (toastEl) return toastEl;
+    toastEl = document.createElement('div');
+    toastEl.className = 'dt360-toast';
+    document.body.appendChild(toastEl);
+    return toastEl;
+  }
+
+  function getEventCategory(name) {
+    if (!name) return 'default';
+    var n = name.toLowerCase();
+    if (n === 'identity capture' || n === 'identity' || n === 'login email capture' || n === 'contactpointemail') return 'identity';
+    if (n.indexOf('consent') >= 0) return 'consent';
+    if (n.indexOf('email') >= 0 || n === 'rt_emailtriggered') return 'email';
+    if (n.indexOf('abandon') >= 0 || n === 'journeyabandonment') return 'journey';
+    if (n.indexOf('view') >= 0 || n.indexOf('page') >= 0) return 'pageview';
+    if (n.indexOf('navigation') >= 0 || n.indexOf('breadcrumb') >= 0) return 'navigation';
+    return 'default';
+  }
+
+  function showToastNotification(name, eventType) {
+    toastQueue.push({ name: name, eventType: eventType });
+    processToastQueue();
+  }
+
+  function processToastQueue() {
+    if (toastShowing || toastQueue.length === 0) return;
+    toastShowing = true;
+
+    var item = toastQueue.shift();
+    var el = createToastEl();
+    var cat = getEventCategory(item.name);
+
+    // Position toast below badge when panel is closed, or below panel header when open
+    if (isOpen) {
+      el.style.top = '140px';
+      el.style.left = '400px';
+    } else {
+      el.style.top = '178px';
+      el.style.left = '16px';
+    }
+
+    el.innerHTML = '<span class="dt360-toast-dot ' + cat + '"></span>' +
+      '<div><div class="dt360-toast-label">📡 Event erkannt</div>' +
+      '<div class="dt360-toast-name">' + (item.name || '?') + '</div></div>';
+
+    // Animate in
+    requestAnimationFrame(function() {
+      el.classList.add('show');
+    });
+
+    // Animate out after 2.5s
+    setTimeout(function() {
+      el.classList.remove('show');
+      setTimeout(function() {
+        toastShowing = false;
+        processToastQueue();
+      }, 400);
+    }, 2500);
+  }
+
+  // --- Event Persistence (sessionStorage) ---
+  function saveEventsToStorage() {
+    try {
+      sessionStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events));
+    } catch(e) {}
+  }
+
+  function loadEventsFromStorage() {
+    try {
+      var stored = sessionStorage.getItem(EVENTS_STORAGE_KEY);
+      if (stored) {
+        var parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          events = parsed;
+          // Cap at MAX_EVENTS
+          while (events.length > MAX_EVENTS) events.shift();
+        }
+      }
+    } catch(e) {}
+  }
+
+  // Load persisted events from previous page
+  loadEventsFromStorage();
+
   // Track whether a form was actually submitted (user clicked "Prämie berechnen")
   var formSubmitted = false;
 
@@ -344,6 +455,12 @@
 
     events.push({ name: name, eventType: eventType, attrs: attrs, time: timeStr() });
     if (events.length > MAX_EVENTS) events.shift();
+
+    // Persist events to sessionStorage for cross-page continuity
+    saveEventsToStorage();
+
+    // Always show toast notification for every tracked event
+    showToastNotification(name, eventType);
 
     // Track form submissions — this gates identity resolution display
     // Match both spaced and unspaced variants from tracking.js
