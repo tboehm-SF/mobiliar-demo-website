@@ -715,13 +715,12 @@
   var currentPageType = detectPageType();
   var syntheticName = pageNames[currentPageType] || 'Page View';
 
-  // Check if this page view was already captured (hook was fast enough)
-  var alreadyCaptured = events.some(function(ev) { return ev.name === syntheticName; });
-  if (!alreadyCaptured) {
-    logEvent({
-      interaction: { name: syntheticName, eventType: 'websiteEngagement' }
-    });
-  }
+  // Always fire the synthetic page view — this guarantees a toast notification
+  // on every page load. The SDK hook might also capture it, resulting in a
+  // duplicate in the event log, but that's acceptable for demo reliability.
+  logEvent({
+    interaction: { name: syntheticName, eventType: 'websiteEngagement' }
+  });
 
   // --- Keyboard shortcut: Ctrl+Shift+D to toggle ---
   document.addEventListener('keydown', function(e) {

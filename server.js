@@ -7,10 +7,11 @@ const PORT = process.env.PORT || 3000;
 // Parse JSON bodies
 app.use(express.json());
 
-// Serve static files from root
+// Serve static files from root (no cache for dev/demo)
 app.use(express.static(path.join(__dirname), {
   extensions: ['html'],
-  maxAge: '1h'
+  maxAge: 0,
+  etag: false
 }));
 
 // ============================================================
