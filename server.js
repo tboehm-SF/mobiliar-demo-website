@@ -477,27 +477,21 @@ app.post('/api/notify-abandonment', async (req, res) => {
     }
     const notifTypeId = notifTypeData.records[0].Id;
 
-    // Step 2: Find the running user + known admin to notify
-    // Get the Connected App user first
-    const whoResp = await fetch(`${apiBase}/sobjects/User/Me`, { headers });
-    const whoData = await whoResp.json();
-    const runningUserId = whoData.Id;
-    console.log(`[Notify] Running user: ${runningUserId} (${whoData.Username})`);
-
-    // Collect unique recipient IDs: running user + known admin + any mobiliar user
-    const recipientSet = new Set([runningUserId]);
-
-    // Add tbohm@mobiliar-demo.ch if different from running user
-    const adminQuery = encodeURIComponent(
-      "SELECT Id FROM User WHERE Username = 'tbohm@mobiliar-demo.ch' AND IsActive = true LIMIT 1"
+    // Step 2: Find human admin users to notify
+    // Query real human System Admins (exclude bots, service users)
+    const userQuery = encodeURIComponent(
+      "SELECT Id, Username FROM User WHERE Profile.Name = 'System Administrator' AND IsActive = true AND (Username = 'tbohm@mobiliar-demo.ch' OR Username = 'trailsignup.6f8879f26b2d65@salesforce.com')"
     );
-    const adminResp = await fetch(`${apiBase}/query/?q=${adminQuery}`, { headers });
-    const adminData = await adminResp.json();
-    if (adminData.records && adminData.records.length > 0) {
-      recipientSet.add(adminData.records[0].Id);
-    }
+    const userResp = await fetch(`${apiBase}/query/?q=${userQuery}`, { headers });
+    const userData = await userResp.json();
 
-    const recipientIds = Array.from(recipientSet);
+    let recipientIds = [];
+    if (userData.records && userData.records.length > 0) {
+      recipientIds = userData.records.map(r => r.Id);
+    } else {
+      // Fallback to known admin ID
+      recipientIds = ['005J60000037xcJIAQ'];
+    }
     console.log(`[Notify] Sending to ${recipientIds.length} recipients:`, recipientIds);
 
     // Step 3: Find the most recent Opportunity to link the notification to
