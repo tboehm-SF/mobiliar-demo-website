@@ -477,23 +477,28 @@ app.post('/api/notify-abandonment', async (req, res) => {
     }
     const notifTypeId = notifTypeData.records[0].Id;
 
-    // Step 2: Find active System Administrator users to notify (human admins only, max 10)
-    const userQuery = encodeURIComponent(
-      "SELECT Id FROM User WHERE Profile.Name = 'System Administrator' AND IsActive = true AND UserType = 'Standard' AND Name != 'Flosum DevOps' AND Name != 'Einstein Helper' AND Name != 'Einstein User' AND Name != 'CRMA Admin' AND Name != 'Exp Cloud Admin' AND Name != 'Sunny Bot' LIMIT 10"
-    );
-    const userResp = await fetch(`${apiBase}/query/?q=${userQuery}`, { headers });
-    const userData = await userResp.json();
+    // Step 2: Find the running user + known admin to notify
+    // Get the Connected App user first
+    const whoResp = await fetch(`${apiBase}/sobjects/User/Me`, { headers });
+    const whoData = await whoResp.json();
+    const runningUserId = whoData.Id;
+    console.log(`[Notify] Running user: ${runningUserId} (${whoData.Username})`);
 
-    let recipientIds = [];
-    if (userData.records && userData.records.length > 0) {
-      recipientIds = userData.records.map(r => r.Id);
-      console.log(`[Notify] Found ${recipientIds.length} System Admin recipients`);
-    } else {
-      // Fallback: get the running user (Connected App user)
-      const whoResp = await fetch(`${apiBase}/sobjects/User/Me`, { headers });
-      const whoData = await whoResp.json();
-      recipientIds = [whoData.Id];
+    // Collect unique recipient IDs: running user + known admin + any mobiliar user
+    const recipientSet = new Set([runningUserId]);
+
+    // Add tbohm@mobiliar-demo.ch if different from running user
+    const adminQuery = encodeURIComponent(
+      "SELECT Id FROM User WHERE Username = 'tbohm@mobiliar-demo.ch' AND IsActive = true LIMIT 1"
+    );
+    const adminResp = await fetch(`${apiBase}/query/?q=${adminQuery}`, { headers });
+    const adminData = await adminResp.json();
+    if (adminData.records && adminData.records.length > 0) {
+      recipientSet.add(adminData.records[0].Id);
     }
+
+    const recipientIds = Array.from(recipientSet);
+    console.log(`[Notify] Sending to ${recipientIds.length} recipients:`, recipientIds);
 
     // Step 3: Find the most recent Opportunity to link the notification to
     let targetId = recipientIds[0]; // default: link to first admin user if no Opportunity found
