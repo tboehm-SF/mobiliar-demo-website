@@ -477,22 +477,12 @@ app.post('/api/notify-abandonment', async (req, res) => {
     }
     const notifTypeId = notifTypeData.records[0].Id;
 
-    // Step 2: Find human admin users to notify
-    // Query real human System Admins (exclude bots, service users)
-    const userQuery = encodeURIComponent(
-      "SELECT Id, Username FROM User WHERE Profile.Name = 'System Administrator' AND IsActive = true AND (Username = 'tbohm@mobiliar-demo.ch' OR Username = 'trailsignup.6f8879f26b2d65@salesforce.com')"
-    );
-    const userResp = await fetch(`${apiBase}/query/?q=${userQuery}`, { headers });
-    const userData = await userResp.json();
-
-    let recipientIds = [];
-    if (userData.records && userData.records.length > 0) {
-      recipientIds = userData.records.map(r => r.Id);
-    } else {
-      // Fallback to known admin ID
-      recipientIds = ['005J60000037xcJIAQ'];
-    }
-    console.log(`[Notify] Sending to ${recipientIds.length} recipients:`, recipientIds);
+    // Step 2: Notify both known admin users
+    const recipientIds = [
+      '005J60000037xcJIAQ',  // tbohm@mobiliar-demo.ch (Thomas Bohm)
+      '005J60000037rnQIAQ'   // trailsignup.6f8879f26b2d65@salesforce.com (A Solution Engineer)
+    ];
+    console.log(`[Notify] Sending to ${recipientIds.length} recipients`);
 
     // Step 3: Find the most recent Opportunity to link the notification to
     let targetId = recipientIds[0]; // default: link to first admin user if no Opportunity found
