@@ -496,7 +496,7 @@ app.post('/api/notify-abandonment', async (req, res) => {
     }
 
     // Step 3: Find the most recent Opportunity to link the notification to
-    let targetId = targetUserId; // default: link to user if no Opportunity found
+    let targetId = recipientIds[0]; // default: link to first admin user if no Opportunity found
 
     // Find Opportunity via Contact email → Account → most recent Opportunity
     const oppQuery = encodeURIComponent(
@@ -533,11 +533,11 @@ app.post('/api/notify-abandonment', async (req, res) => {
     const notifResult = await notifResp.json();
 
     if (notifResp.ok) {
-      console.log(`[Notify] Custom Notification sent for ${email} → user ${targetUserId}`);
+      console.log(`[Notify] Custom Notification sent for ${email} → ${recipientIds.length} admins`);
       res.json({
         success: true,
         message: `Notification sent for ${fullName} (${email})`,
-        targetUserId,
+        recipientCount: recipientIds.length,
         targetId
       });
     } else {
