@@ -203,10 +203,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- Abandonment Detection ---
-  // When user navigates away with a touched but un-submitted form,
-  // fire a JourneyAbandonment event and optionally create a Lead.
-  window.addEventListener('beforeunload', () => {
-    if (!formTouched || formSubmitted) return;
+  // Fires when a logged-in user navigates away from a touched but
+  // un-submitted form.  Creates an Opportunity + bell notification.
+  let abandonmentFired = false;
+
+  function fireAbandonment() {
+    if (abandonmentFired || !formTouched || formSubmitted) return;
 
     const cache = sessionStorage.getItem(FORM_CACHE_KEY);
     if (!cache) return;
@@ -214,16 +216,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let parsed;
     try { parsed = JSON.parse(cache); } catch(e) { return; }
 
-    // Persist abandonment flag in sessionStorage so the next page's
-    // DT360 panel can detect and display the "Journey Abbruch" state.
+    abandonmentFired = true;
+
+    // Persist abandonment flag for next page's DT360 panel
     parsed.abandoned = true;
     parsed.abandonedAt = new Date().toISOString();
     sessionStorage.setItem(FORM_CACHE_KEY, JSON.stringify(parsed));
 
-    // Check if user is logged in (known identity)
     const loginData = sessionStorage.getItem('mobi-login');
 
-    // Fire SDK abandonment event (sendBeacon for reliability)
+    // Fire SDK abandonment event
     if (window.__trackEvent) {
       window.__trackEvent('JourneyAbandonment', {
         page: parsed.page || currentPage,
@@ -234,42 +236,67 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // If user is known (logged in), trigger server-side Lead creation via sendBeacon
+    // If logged in → create Opportunity + send SF notification
     if (loginData) {
       try {
         const user = JSON.parse(loginData);
+        const productLabel = parsed.fields?.deckung ? 'Autoversicherung – ' + parsed.fields.deckung : 'Versicherung';
+
         const leadPayload = {
           email: user.email,
           firstName: user.vorname || '',
           lastName: user.nachname || '',
-          product: parsed.fields?.deckung ? 'Autoversicherung – ' + parsed.fields.deckung : 'Versicherung',
+          product: productLabel,
           source: 'Journey Abandonment',
           page: parsed.page || currentPage,
           formFields: parsed.fields || {}
         };
-        navigator.sendBeacon(
-          '/api/create-lead',
-          new Blob([JSON.stringify(leadPayload)], { type: 'application/json' })
-        );
-        console.log('[Mobiliar] Abandonment Lead beacon sent:', leadPayload);
-
-        // Also trigger Salesforce console notification for the sales team
         const notifyPayload = {
           email: user.email,
           firstName: user.vorname || '',
           lastName: user.nachname || '',
-          product: leadPayload.product,
+          product: productLabel,
           page: parsed.page || currentPage
         };
-        navigator.sendBeacon(
-          '/api/notify-abandonment',
-          new Blob([JSON.stringify(notifyPayload)], { type: 'application/json' })
-        );
-        console.log('[Mobiliar] Abandonment notification beacon sent:', notifyPayload);
+
+        // Use fetch with keepalive (more reliable than sendBeacon for JSON)
+        fetch('/api/create-lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(leadPayload),
+          keepalive: true
+        }).catch(function() {});
+
+        fetch('/api/notify-abandonment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(notifyPayload),
+          keepalive: true
+        }).catch(function() {});
+
+        console.log('[Mobiliar] Abandonment beacons fired:', leadPayload);
       } catch(e) {
-        console.warn('[Mobiliar] Abandonment Lead/Notification failed:', e);
+        console.warn('[Mobiliar] Abandonment failed:', e);
       }
     }
+  }
+
+  // Fire on beforeunload (tab close, external navigation)
+  window.addEventListener('beforeunload', fireAbandonment);
+
+  // Also intercept internal nav-link clicks so we fire BEFORE the browser navigates
+  document.querySelectorAll('a[href]').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      if (!formTouched || formSubmitted) return; // nothing to abandon
+      // Only intercept same-site navigation links
+      if (link.hostname && link.hostname !== location.hostname) return;
+      if (link.getAttribute('href').startsWith('#')) return;
+
+      e.preventDefault();
+      fireAbandonment();
+      // Give the beacons 300ms to dispatch, then navigate
+      setTimeout(function() { window.location.href = link.href; }, 300);
+    });
   });
 
   /* --- Toast Helper --- */
