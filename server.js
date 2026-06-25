@@ -477,22 +477,22 @@ app.post('/api/notify-abandonment', async (req, res) => {
     }
     const notifTypeId = notifTypeData.records[0].Id;
 
-    // Step 2: Find the target user (org owner / admin) to notify
-    // We notify the org's admin user (first System Administrator found)
+    // Step 2: Find ALL active System Administrator users to notify
     const userQuery = encodeURIComponent(
-      "SELECT Id FROM User WHERE Profile.Name = 'System Administrator' AND IsActive = true AND Username LIKE '%mobiliar%' LIMIT 1"
+      "SELECT Id FROM User WHERE Profile.Name = 'System Administrator' AND IsActive = true"
     );
     const userResp = await fetch(`${apiBase}/query/?q=${userQuery}`, { headers });
     const userData = await userResp.json();
 
-    let targetUserId;
+    let recipientIds = [];
     if (userData.records && userData.records.length > 0) {
-      targetUserId = userData.records[0].Id;
+      recipientIds = userData.records.map(r => r.Id);
+      console.log(`[Notify] Found ${recipientIds.length} System Admin recipients`);
     } else {
       // Fallback: get the running user (Connected App user)
       const whoResp = await fetch(`${apiBase}/sobjects/User/Me`, { headers });
       const whoData = await whoResp.json();
-      targetUserId = whoData.Id;
+      recipientIds = [whoData.Id];
     }
 
     // Step 3: Find the most recent Opportunity to link the notification to
@@ -515,8 +515,8 @@ app.post('/api/notify-abandonment', async (req, res) => {
     const notifPayload = {
       inputs: [{
         customNotifTypeId: notifTypeId,
-        recipientIds: [targetUserId],
-        title: `🔔 Journey-Abbruch: ${fullName}`,
+        recipientIds: recipientIds,
+        title: `Journey-Abbruch: ${fullName}`,
         body: `${fullName} (${email}) hat den ${productLabel}-Rechner auf ${page || 'der Website'} verlassen ohne abzuschliessen.`,
         targetId: targetId
       }]
