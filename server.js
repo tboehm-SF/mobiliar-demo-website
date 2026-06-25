@@ -477,9 +477,9 @@ app.post('/api/notify-abandonment', async (req, res) => {
     }
     const notifTypeId = notifTypeData.records[0].Id;
 
-    // Step 2: Find ALL active System Administrator users to notify
+    // Step 2: Find active System Administrator users to notify (human admins only, max 10)
     const userQuery = encodeURIComponent(
-      "SELECT Id FROM User WHERE Profile.Name = 'System Administrator' AND IsActive = true"
+      "SELECT Id FROM User WHERE Profile.Name = 'System Administrator' AND IsActive = true AND UserType = 'Standard' AND Name != 'Flosum DevOps' AND Name != 'Einstein Helper' AND Name != 'Einstein User' AND Name != 'CRMA Admin' AND Name != 'Exp Cloud Admin' AND Name != 'Sunny Bot' LIMIT 10"
     );
     const userResp = await fetch(`${apiBase}/query/?q=${userQuery}`, { headers });
     const userData = await userResp.json();
